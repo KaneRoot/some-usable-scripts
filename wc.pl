@@ -1,5 +1,7 @@
 #!/usr/bin/perl -w
 
+# This script displays the number of lines in a file
+
 use strict;
 
 die "un argument svp ! " if !defined ($ARGV[0]);

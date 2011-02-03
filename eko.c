@@ -5,7 +5,7 @@
 
 int main( int argc, char **argv)
 {
-// register ne sert plus de nos jours
+// register is a bit useless nowadays
 	register int i, nflg;
 	nflg = 0;
 // Le flag "n" sert à rajouter un saut de ligne

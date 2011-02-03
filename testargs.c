@@ -1,3 +1,6 @@
+// This file displays the GDMSESSION environment variable
+// Try with others if you want, you know how to now
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
