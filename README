@@ -3,3 +3,148 @@ Hello everyone
 You can watch all my little scripts in C and Perl.
 
 Enjoy !
+
+MANGEZ
+
+SELECT date, SUM(dollars) AS total_dollars,
+	SUM(SUM(dollars)) OVER(ORDER BY date ROWS UNBOUNDED PRECEDING) AS run_dollars,
+	SUM(quantity) AS total_qty,
+	SUM(SUM(quantity)) OVER(ORDER BY date ROWS UNBOUNDED PRECEDING) AS run_qty
+	FROM aroma.period a, aroma.sales b, aroma.product c
+	WHERE a.perkey = b.perkey
+	AND c.prodkey = b.prodkey
+	AND c.classkey = b.classkey
+	AND year = 2006
+	AND month = 'JAN'
+	AND prod_name = 'Aroma Roma'
+GROUP BY date
+ORDER BY date;
+
+
+SUM(SUM(dollars)) OVER(ORDER BY date ROWS UNBOUNDED PRECEDING) 
+
+OVER = OLAP aggregation function
+
+MOVING Average = moyenne sur quelques jours pour faire une courbe de la moyenne (moins en dents de scie)
+
+
+SELECT date, SUM(dollars) AS total_dollars,
+	SUM(SUM(dollars)) OVER(PARTITION BY week ORDER BY date
+	ROWS UNBOUNDED PRECEDING) AS run_dollars,
+	SUM(quantity) AS total_qty,
+	SUM(SUM(quantity)) OVER(PARTITION BY week ORDER BY date
+	ROWS UNBOUNDED PRECEDING) AS run_qty
+	FROM aroma.period a, aroma.sales b, aroma.product c
+	WHERE a.perkey = b.perkey
+	AND c.prodkey = b.prodkey
+	AND c.classkey = b.classkey
+	AND year = 2006
+	AND month = 'JAN'
+	AND prod_name = 'Aroma Roma'
+GROUP BY week, date
+ORDER BY week, date;
+
+PARTITION BY week = Faire la somme mais par semaine
+
+
+SELECT date, SUM(dollars) AS total_dollars,
+	SUM(SUM(dollars)) OVER (PARTITION BY week ORDER BY date
+	ROWS UNBOUNDED PRECEDING) AS run_dollars,
+	SUM(quantity) AS total_qty,
+	SUM(SUM(quantity)) OVER(PARTITION BY week ORDER BY date
+	ROWS UNBOUNDED PRECEDING) AS run_qty, week
+	FROM aroma.period a, aroma.sales b, aroma.product c
+	WHERE a.perkey = b.perkey
+	AND c.prodkey = b.prodkey
+	AND c.classkey = b.classkey
+	AND year = 2006
+	AND month = 'JAN'
+	AND prod_name = 'Aroma Roma'
+GROUP BY week, date
+ORDER BY week, date;
+
+
+SELECT prod_name, SUM(dollars) AS total_sales, SUM(quantity) AS total_qty,
+	DEC(sum(dollars)/sum(quantity), 7, 2) AS price
+	FROM aroma.product a, aroma.sales b, aroma.period c
+	WHERE a.prodkey = b.prodkey
+	AND a.classkey = b.classkey
+	AND c.perkey = b.perkey
+	AND year = 2004
+GROUP BY prod_name
+ORDER BY price;
+
+dec(sum(dollars)/sum(quantity), 7, 2) AS price
+
+
+SELECT t1.date, sales_cume_west, sales_cume_south,
+	sales_cume_west - sales_cume_south AS west_vs_south
+	FROM
+	(SELECT date, SUM(dollars) AS total_sales,
+	SUM(SUM(dollars)) OVER(ORDER BY date
+	ROWS UNBOUNDED PRECEDING) AS sales_cume_west
+	FROM aroma.market a,
+	aroma.store b,
+	aroma.sales c,
+	aroma.period d
+	WHERE a.mktkey = b.mktkey
+	AND b.storekey = c.storekey
+	AND d.perkey = c.perkey
+	AND year = 2006
+	AND month = 'MAR'
+	AND region = 'West'
+	GROUP BY date) AS t1
+	JOIN 
+	(SELECT date, SUM(dollars) AS total_sales,
+	SUM(SUM(dollars)) OVER(ORDER BY date ROWS UNBOUNDED PRECEDING) AS sales_cume_south
+	FROM aroma.market a,
+	aroma.store b,
+	aroma.sales c,
+	aroma.period d
+	WHERE a.mktkey = b.mktkey
+	AND b.storekey = c.storekey
+	AND d.perkey = c.perkey
+	AND year = 2006
+	AND month = 'MAR'
+	AND region = 'South'
+	GROUP BY date) AS t2
+ON t1.date = t2.date
+ORDER BY date;
+
+
+
+
+SELECT city, week, SUM(dollars) AS sales,
+	DEC(AVG(SUM(dollars)) OVER(partition by city
+	ORDER BY city, week ROWS 2 PRECEDING),7,2) AS mov_avg,
+	SUM(SUM(dollars)) OVER(PARTITION BY city
+	ORDER BY week ROWS unbounded PRECEDING) AS run_sales
+	FROM aroma.store a,
+	aroma.sales b,
+	aroma.period c
+	WHERE a.storekey = b.storekey
+	AND c.perkey = b.perkey
+	AND qtr = 'Q3_05'
+	AND city IN ('San Jose', 'Miami')
+GROUP BY city, week;
+
+
+ROWS n PRECEDING (ou on peut aussi dire : FOLLOWING )
+
+
+
+SELECT date, SUM(quantity) AS day_qty,
+	DEC(SUM(SUM(quantity)) OVER(ORDER BY date
+	ROWS 6 PRECEDING),7,2) AS mov_sum
+	FROM aroma.sales a, aroma.period b, aroma.product c
+	WHERE b.perkey = a.perkey
+	AND c.classkey = a.classkey
+	AND c.prodkey = a.prodkey
+	AND year = 2006
+	AND month = 'MAR'
+	AND prod_name = 'Demitasse Ms'
+GROUP BY date
+ORDER BY date;
+
+
+
