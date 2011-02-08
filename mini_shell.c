@@ -1,3 +1,6 @@
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
 #include <stdio.h>
 #include <assert.h>
 #include <unistd.h>
@@ -9,26 +12,78 @@ char * lireChaine3();
 void changeDirectory(char * path);
 int subString (const char *chaine, int debut, int fin, char *result);
 void erreur(char *s);
+void executionArrierePlan(char *arg1);
+void execution(char *arg1, char *arg2, char *arg3);
 
 int main(int argc, char **argv)
 {
-	char **arg1, **arg2, **arg3;
-	lire(arg1, arg2, arg3);
-
-	if(strcmp(*arg1, "cd") == 0)
+	int commandeInterne;
+	char *arg1, *arg2, *arg3;
+	// Boucle principale qui attend les commandes
+	while(1)
 	{
-		// On change de répertoire
-		changeDirectory(*arg2);
-	}
-	
+		printf("[ %s ] %s $ ",(char *) getenv("USER"), (char *) getenv("PWD"));
+		arg1 = arg2 = arg3 = NULL;
+		commandeInterne = 0;
+		lire(&arg1, &arg2, &arg3);
 
+		if(strcmp(arg1, "cd") == 0)
+		{
+			commandeInterne = 1;
+			// On change de répertoire
+			changeDirectory(arg2);
+		}
+		if(strcmp(arg1, "exit") == 0)
+		{
+			commandeInterne = 1;
+			exit(0);
+		}
+		if(commandeInterne == 0)
+		{
+			execution(arg1, arg2, arg3);
+		}
+	}
+
+}
+void execution(char *arg1, char *arg2, char *arg3)
+{
+	int pid;
+	if(arg2 != NULL)
+	{
+		if(strcmp(arg2, "&") == 0)
+			executionArrierePlan(arg1);
+		if(strcmp(arg2, "<") == 0)
+		{
+			printf("Commande avec <\n");
+		}
+				
+	}
+	else // exécution basique
+	{
+		if((pid = fork()) == 0)
+		{
+			execv(arg1, NULL);
+			erreur("Soucis au niveau du exec");
+			exit(-2);
+		}
+		else
+			waitpid(pid);
+	}
 }
 void changeDirectory(char * path)
 {
-	if(strcmp(path, "") == 0)
+	if(path == NULL || strcmp(path, "") == 0)
+	{
 		chdir(getenv("HOME"));
-	else if(chdir(path) != 0 )
-		erreur("Impossible de changer de répertoire");
+		setenv("PWD", (char *) getenv("HOME"), 1);
+	}
+	else
+	{
+		if(chdir(path) != 0) 
+			erreur("Impossible de changer de répertoire");
+		else
+			setenv("PWD", path, 1);
+	}
 }
 void lire(char** arg1, char** arg2, char** arg3) 
 {
@@ -82,7 +137,6 @@ char *lireChaine3()
 void erreur(char *s)
 {
 	perror(s);
-	exit(-2);
 }
 int subString (const char *chaine, int debut, int fin, char *result)
 {
@@ -90,3 +144,30 @@ int subString (const char *chaine, int debut, int fin, char *result)
 	memcpy (result, (char *)chaine+debut, fin+1-debut);
 	return (fin+1-debut);
 } 
+void executionArrierePlan(char *arg1)
+{
+	int pid;
+	int pipefd[2];
+	pipe(pipefd);
+	if((pid = fork()) == 0)
+	{
+		if((pid = fork()) == 0)
+		{
+			close(pipefd[1]);
+			int temp, fd0, fd1, fd2, pid;
+			if((fd0 = open("/dev/null", O_RDONLY)) == -1) 
+			{
+				erreur("Ouverture fichier null");
+				exit(-2);
+			}
+			exit(0);
+		}
+		else
+		{
+			close(pipefd[0]);
+		}
+	}
+	else
+	{
+	}
+}
