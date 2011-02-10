@@ -1,5 +1,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/wait.h>
+#include <dirent.h>
 #include <fcntl.h>
 #include <stdio.h>
 #include <assert.h>
@@ -12,10 +14,10 @@ char * lireChaine3();
 void changeDirectory(char * path);
 int subString (const char *chaine, int debut, int fin, char *result);
 void erreur(char *s);
-void executionArrierePlan(char *arg1);
-void execution(char *arg1, char *arg2, char *arg3);
+void executionArrierePlan(char *arg1, char **env);
+void execution(char *arg1, char *arg2, char *arg3, char **env);
 
-int main(int argc, char **argv)
+int main(int argc, char **argv, char **env)
 {
 	int commandeInterne;
 	char *arg1, *arg2, *arg3;
@@ -27,34 +29,61 @@ int main(int argc, char **argv)
 		commandeInterne = 0;
 		lire(&arg1, &arg2, &arg3);
 
-		if(strcmp(arg1, "cd") == 0)
+		if(arg1 != NULL)
 		{
-			commandeInterne = 1;
-			// On change de répertoire
-			changeDirectory(arg2);
-		}
-		if(strcmp(arg1, "exit") == 0)
-		{
-			commandeInterne = 1;
-			exit(0);
-		}
-		if(commandeInterne == 0)
-		{
-			execution(arg1, arg2, arg3);
+			if(strcmp(arg1, "cd") == 0)
+			{
+				commandeInterne = 1;
+				// On change de répertoire
+				changeDirectory(arg2);
+			}
+			if(strcmp(arg1, "exit") == 0)
+			{
+				commandeInterne = 1;
+				exit(0);
+			}
+			if(commandeInterne == 0)
+			{
+				execution(arg1, arg2, arg3, env);
+			}
 		}
 	}
 
 }
-void execution(char *arg1, char *arg2, char *arg3)
+void execution(char *arg1, char *arg2, char *arg3, char **env)
 {
 	int pid;
+	char ** options = malloc(sizeof(char *)*3);
+	options[0] = arg1;
+	options[1] = NULL;
+	int status;
+
 	if(arg2 != NULL)
 	{
 		if(strcmp(arg2, "&") == 0)
-			executionArrierePlan(arg1);
+			executionArrierePlan(arg1, env);
 		if(strcmp(arg2, "<") == 0)
 		{
-			printf("Commande avec <\n");
+			if((pid = fork()) == 0)
+			{
+				int fd0;
+				if((fd0 = open(arg3, O_RDONLY)) == -1) 
+				{
+					erreur("Ouverture fichier");
+					exit(EXIT_FAILURE);
+				}
+				close(0); dup(fd0); // Redirection de l'entrée standard
+
+				execvpe(arg1, options, env);
+				erreur("execvpe n'a pas fonctionné");
+				exit(EXIT_FAILURE);
+			}
+			else
+			{
+				waitpid(pid, &status, 0 );
+				if(status != 0)
+					erreur("Soucis avec le fils");
+			}
 		}
 				
 	}
@@ -62,12 +91,12 @@ void execution(char *arg1, char *arg2, char *arg3)
 	{
 		if((pid = fork()) == 0)
 		{
-			execv(arg1, NULL);
+			execvpe(arg1, options, env);
 			erreur("Soucis au niveau du exec");
-			exit(-2);
+			exit(EXIT_FAILURE);
 		}
 		else
-			waitpid(pid);
+			waitpid(pid, &status, 0);
 	}
 }
 void changeDirectory(char * path)
@@ -79,6 +108,8 @@ void changeDirectory(char * path)
 	}
 	else
 	{
+		DIR * repertoire = opendir(path); // A REPRENDRE
+		struct dirent rep = readdir(repertoire);
 		if(chdir(path) != 0) 
 			erreur("Impossible de changer de répertoire");
 		else
@@ -144,13 +175,29 @@ int subString (const char *chaine, int debut, int fin, char *result)
 	memcpy (result, (char *)chaine+debut, fin+1-debut);
 	return (fin+1-debut);
 } 
-void executionArrierePlan(char *arg1)
+void executionArrierePlan(char *arg1, char **env)
 {
 	int pid;
-	int pipefd[2];
-	pipe(pipefd);
 	if((pid = fork()) == 0)
 	{
+		int pipefd[2];
+		pipe(pipefd);
+		int fd0, fd2;
+
+		if((fd0 = open("/dev/null", O_RDONLY)) == -1) 
+		{
+			erreur("Ouverture fichier null");
+			exit(EXIT_FAILURE);
+		}
+		if((fd2 = open("nohup.err", O_WRONLY | O_CREAT | O_TRUNC, 0666)) == -1 ) 
+		{
+			erreur("Ouverture fichier nohup.err");
+			exit(EXIT_FAILURE);
+		}
+		
+		close(0); dup(fd0);
+		close(2); dup(fd2);
+
 		if((pid = fork()) == 0)
 		{
 			close(pipefd[1]);
@@ -158,7 +205,7 @@ void executionArrierePlan(char *arg1)
 			if((fd0 = open("/dev/null", O_RDONLY)) == -1) 
 			{
 				erreur("Ouverture fichier null");
-				exit(-2);
+				exit(EXIT_FAILURE);
 			}
 			exit(0);
 		}
