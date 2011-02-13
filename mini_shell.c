@@ -14,7 +14,7 @@ char * lireChaine3();
 void changeDirectory(char * path);
 int subString (const char *chaine, int debut, int fin, char *result);
 void erreur(char *s);
-void executionArrierePlan(char *arg1, char **env);
+void executionPipe(char *arg1, char * arg3, char **env);
 void execution(char *arg1, char *arg2, char *arg3, char **env);
 void quitter(int signal);
 
@@ -66,8 +66,8 @@ void execution(char *arg1, char *arg2, char *arg3, char **env)
 
 	if(arg2 != NULL)
 	{
-		if(strcmp(arg2, "&") == 0)
-			executionArrierePlan(arg1, env);
+		if(strcmp(arg2, "|") == 0)
+			executionPipe(arg1, arg3, env);
 		else
 		{
 			if((pid = fork()) == 0)
@@ -132,7 +132,7 @@ void changeDirectory(char * path)
 		if(chdir(path) != 0) 
 			erreur("Impossible de changer de répertoire");
 		else
-			setenv("PWD", path, 1);
+			setenv("PWD",path, 1);
 	}
 }
 void lire(char** arg1, char** arg2, char** arg3) 
@@ -194,47 +194,42 @@ int subString (const char *chaine, int debut, int fin, char *result)
 	memcpy (result, (char *)chaine+debut, fin+1-debut);
 	return (fin+1-debut);
 } 
-void executionArrierePlan(char *arg1, char **env)
+void executionPipe(char *arg1, char *arg3, char **env)
 {
-	int pid;
+	int pid, status;
 	if((pid = fork()) == 0)
 	{
 		int pipefd[2];
 		pipe(pipefd);
-		int fd0, fd2;
-
-		if((fd0 = open("/dev/null", O_RDONLY)) == -1) 
-		{
-			erreur("Ouverture fichier null");
-			exit(EXIT_FAILURE);
-		}
-		if((fd2 = open("nohup.err", O_WRONLY | O_CREAT | O_TRUNC, 0666)) == -1 ) 
-		{
-			erreur("Ouverture fichier nohup.err");
-			exit(EXIT_FAILURE);
-		}
+		int fd0, fd2, pid;
+		FILE * fd00, *fd01, *fd02;
 		
-		close(0); dup(fd0);
-		close(2); dup(fd2);
+		char ** options = malloc(sizeof(char *)*3);
+		options[0] = arg1;
+		options[1] = NULL;
 
-		if((pid = fork()) == 0)
-		{
-			close(pipefd[1]);
-			int temp, fd00, fd01, fd02, pid;
-			if((fd00 = open("/dev/null", O_RDONLY)) == -1) 
-			{
-				erreur("Ouverture fichier null");
-				exit(EXIT_FAILURE);
-			}
-			exit(EXIT_SUCCESS);
-		}
-		else
+		if((pid = fork()) == 0) // Dans le fils : exécution de la première commande
 		{
 			close(pipefd[0]);
+			close(1); dup(pipefd[1]);
+
+			execvpe(arg1, options, env);
+			erreur("Soucis avec le exec, option 'PIPE'");
+			exit(EXIT_FAILURE);
+		}
+		else // Le père récupère en entrée la sortie du fils
+		{
+			close(pipefd[1]);
+			close(0); dup(pipefd[0]);
+
+			execvpe(arg3, options, env);
+			erreur("Soucis avec le exec, option 'PIPE'");
+			exit(EXIT_FAILURE);
 		}
 	}
 	else
 	{
+		waitpid(pid, &status, 0);
 	}
 }
 void quitter(int signal)
