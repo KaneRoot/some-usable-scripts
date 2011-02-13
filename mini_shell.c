@@ -82,7 +82,7 @@ void execution(char *arg1, char *arg2, char *arg3, char **env)
 					}
 					close(0); dup(fd0); // Redirection de l'entrée standard
 				}
-				if(strcmp(arg2, ">") == 0) // On redirige la sortie vers un fichier (arg3)
+				else if(strcmp(arg2, ">") == 0) // On redirige la sortie vers un fichier (arg3)
 				{
 					if((fd1 = open(arg3, O_WRONLY | O_CREAT | O_TRUNC , 0666)) == -1)
 					{
@@ -91,7 +91,7 @@ void execution(char *arg1, char *arg2, char *arg3, char **env)
 					}
 					close(1); dup(fd1); // Redirection de la sortie standard
 				}
-				if(strcmp(arg2, "&") == 0) // Exécution en arrière plan, on a rien en entrée
+				else if(strcmp(arg2, "&") == 0) // Exécution en arrière plan, on a rien en entrée
 				{
 					if((fd0 = open("/dev/null", O_RDONLY)) == -1)
 					{
@@ -99,6 +99,15 @@ void execution(char *arg1, char *arg2, char *arg3, char **env)
 						exit(EXIT_FAILURE);
 					}
 					close(0); dup(fd0);
+				}
+				else // Exécution simple (avec arguments)
+				{
+					free(options);
+					options = malloc(4 * sizeof(char *));
+					options[0] = arg1;
+					options[1] = arg2;
+					options[2] = arg3;
+					options[3] = NULL;
 				}
 				execvpe(arg1, options, env);
 				erreur("execvpe n'a pas fonctionné");
