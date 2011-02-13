@@ -16,11 +16,17 @@ int subString (const char *chaine, int debut, int fin, char *result);
 void erreur(char *s);
 void executionArrierePlan(char *arg1, char **env);
 void execution(char *arg1, char *arg2, char *arg3, char **env);
+void quitter(int signal);
 
 int main(int argc, char **argv, char **env)
 {
 	int commandeInterne;
 	char *arg1, *arg2, *arg3;
+
+	signal(SIGHUP, quitter);
+	signal(SIGINT, quitter);
+	signal(SIGQUIT, quitter);
+
 	// Boucle principale qui attend les commandes
 	while(1)
 	{
@@ -40,7 +46,7 @@ int main(int argc, char **argv, char **env)
 			if(strcmp(arg1, "exit") == 0)
 			{
 				commandeInterne = 1;
-				exit(0);
+				exit(EXIT_SUCCESS);
 			}
 			if(commandeInterne == 0)
 			{
@@ -62,18 +68,29 @@ void execution(char *arg1, char *arg2, char *arg3, char **env)
 	{
 		if(strcmp(arg2, "&") == 0)
 			executionArrierePlan(arg1, env);
-		if(strcmp(arg2, "<") == 0)
+		else
 		{
 			if((pid = fork()) == 0)
 			{
-				int fd0;
-				if((fd0 = open(arg3, O_RDONLY)) == -1) 
+				int fd0,fd1;
+				if(strcmp(arg2, "<") == 0)
 				{
-					erreur("Ouverture fichier");
-					exit(EXIT_FAILURE);
+					if((fd0 = open(arg3, O_RDONLY)) == -1) 
+					{
+						erreur("Ouverture fichier");
+						exit(EXIT_FAILURE);
+					}
+					close(0); dup(fd0); // Redirection de l'entrée standard
 				}
-				close(0); dup(fd0); // Redirection de l'entrée standard
-
+				if(strcmp(arg2, ">") == 0)
+				{
+					if((fd1 = open(arg3, O_WRONLY | O_CREAT | O_TRUNC , 0666)) == -1)
+					{
+						erreur("Redirection sortie standard vers fichier");
+						exit(EXIT_FAILURE);
+					}
+					close(1); dup(fd1);
+				}
 				execvpe(arg1, options, env);
 				erreur("execvpe n'a pas fonctionné");
 				exit(EXIT_FAILURE);
@@ -85,8 +102,9 @@ void execution(char *arg1, char *arg2, char *arg3, char **env)
 					erreur("Soucis avec le fils");
 			}
 		}
-				
+
 	}
+				
 	else // exécution basique
 	{
 		if((pid = fork()) == 0)
@@ -98,6 +116,7 @@ void execution(char *arg1, char *arg2, char *arg3, char **env)
 		else
 			waitpid(pid, &status, 0);
 	}
+	free(options);
 }
 void changeDirectory(char * path)
 {
@@ -109,7 +128,7 @@ void changeDirectory(char * path)
 	else
 	{
 		DIR * repertoire = opendir(path); // A REPRENDRE
-		struct dirent rep = readdir(repertoire);
+		struct dirent * rep = readdir(repertoire);
 		if(chdir(path) != 0) 
 			erreur("Impossible de changer de répertoire");
 		else
@@ -201,13 +220,13 @@ void executionArrierePlan(char *arg1, char **env)
 		if((pid = fork()) == 0)
 		{
 			close(pipefd[1]);
-			int temp, fd0, fd1, fd2, pid;
-			if((fd0 = open("/dev/null", O_RDONLY)) == -1) 
+			int temp, fd00, fd01, fd02, pid;
+			if((fd00 = open("/dev/null", O_RDONLY)) == -1) 
 			{
 				erreur("Ouverture fichier null");
 				exit(EXIT_FAILURE);
 			}
-			exit(0);
+			exit(EXIT_SUCCESS);
 		}
 		else
 		{
@@ -217,4 +236,9 @@ void executionArrierePlan(char *arg1, char **env)
 	else
 	{
 	}
+}
+void quitter(int signal)
+{
+	printf("\nVous avez indiqué le signal avec le numéro : %d\n", signal);
+	exit(EXIT_SUCCESS);
 }
