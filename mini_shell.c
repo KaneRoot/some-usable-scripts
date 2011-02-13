@@ -73,7 +73,7 @@ void execution(char *arg1, char *arg2, char *arg3, char **env)
 			if((pid = fork()) == 0)
 			{
 				int fd0,fd1;
-				if(strcmp(arg2, "<") == 0)
+				if(strcmp(arg2, "<") == 0) // On prend arg3 en entrée standard
 				{
 					if((fd0 = open(arg3, O_RDONLY)) == -1) 
 					{
@@ -82,14 +82,23 @@ void execution(char *arg1, char *arg2, char *arg3, char **env)
 					}
 					close(0); dup(fd0); // Redirection de l'entrée standard
 				}
-				if(strcmp(arg2, ">") == 0)
+				if(strcmp(arg2, ">") == 0) // On redirige la sortie vers un fichier (arg3)
 				{
 					if((fd1 = open(arg3, O_WRONLY | O_CREAT | O_TRUNC , 0666)) == -1)
 					{
 						erreur("Redirection sortie standard vers fichier");
 						exit(EXIT_FAILURE);
 					}
-					close(1); dup(fd1);
+					close(1); dup(fd1); // Redirection de la sortie standard
+				}
+				if(strcmp(arg2, "&") == 0) // Exécution en arrière plan, on a rien en entrée
+				{
+					if((fd0 = open("/dev/null", O_RDONLY)) == -1)
+					{
+						erreur("Ouverture /dev/null");
+						exit(EXIT_FAILURE);
+					}
+					close(0); dup(fd0);
 				}
 				execvpe(arg1, options, env);
 				erreur("execvpe n'a pas fonctionné");
@@ -97,9 +106,16 @@ void execution(char *arg1, char *arg2, char *arg3, char **env)
 			}
 			else
 			{
-				waitpid(pid, &status, 0 );
-				if(status != 0)
-					erreur("Soucis avec le fils");
+				if(strcmp(arg2, "&") == 0) // Si exécution en arrière plan
+				{
+					signal(SIGCHLD, SIG_IGN);
+				}
+				else // Sinon on attend la fin d'exécution du fils
+				{
+					waitpid(pid, &status, 0 );
+					if(status != 0)
+						erreur("Soucis avec le fils");
+				}
 			}
 		}
 
