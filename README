@@ -146,5 +146,86 @@ SELECT date, SUM(quantity) AS day_qty,
 GROUP BY date
 ORDER BY date;
 
+REPONSES :
 
+# Total du montant des ventes par catégorie
+
+select c.class_type, sum(s.dollars) as total
+from aroma.class c, aroma.sales s, aroma.product p
+where c.classkey = p.classkey
+and p.prodkey = s.prodkey
+and p.classkey = s.classkey
+group by c.class_type
+order by total desc
+
+# Pourcentage du montant des ventes de chaque catégorie
+
+select c.class_type, dec(100*sum(s.dollars)/(select sum(dollars) from aroma.sales),7,0) as part
+from aroma.class c, aroma.sales s, aroma.product p
+where c.classkey = p.classkey
+and p.prodkey = s.prodkey
+and p.classkey = s.classkey
+group by c.class_type
+order by part desc
+
+# Classement des ventes par classes de produit
+
+select c.class_type, dec(100*sum(s.dollars)/(select sum(dollars) from aroma.sales),7,0) as part, rank() over(order by sum(s.dollars) desc) as rang
+from aroma.class c, aroma.sales s, aroma.product p
+where c.classkey = p.classkey
+and p.prodkey = s.prodkey
+and p.classkey = s.classkey
+group by c.class_type
+order by part desc
+
+# Produit le plus vendu, pourcentage correspondant
+
+select p.prodkey, p.classkey, p.prod_name, p.pkg_type, dec(100*sum(s.dollars)/(select sum(dollars) from aroma.sales),7,0) as part
+from aroma.sales s, aroma.product p
+where p.prodkey = s.prodkey
+and p.classkey = s.classkey
+group by p.prodkey, p.classkey, p.prod_name, p.pkg_type
+order by part desc
+
+# Montant des ventes des produits par semaine
+
+select p.prodkey, p.classkey, p.prod_name, p.pkg_type, t.week, sum(s.dollars) as montant
+from aroma.sales s, aroma.product p, aroma.period t
+where p.prodkey = s.prodkey
+and p.classkey = s.classkey
+and s.perkey = t.perkey
+group by p.prodkey, p.classkey, p.prod_name, p.pkg_type,t.week
+order by t.week
+
+# Classement des produits par montant des ventes décroissant pour chaque semaine
+
+select p.prodkey, p.classkey, p.prod_name, p.pkg_type, t.week, sum(s.dollars) as montant, rank() over(partition by week order by week, sum(s.dollars) desc) as rang
+from aroma.sales s, aroma.product p, aroma.period t
+where p.prodkey = s.prodkey
+and p.classkey = s.classkey
+and s.perkey = t.perkey
+group by p.prodkey, p.classkey, p.prod_name, p.pkg_type,t.week
+order by t.week, rang
+
+# Classement moyen des produits en vente hebdomadaire
+
+select t.prodkey, t.classkey, t.prod_name, t.pkg_type, avg(rang) as rang_moyen
+from (select p.prodkey, p.classkey, p.prod_name, p.pkg_type, t.week, sum(s.dollars) as montant, rank() over(partition by week order by week, sum(s.dollars) desc) as rang
+from aroma.sales s, aroma.product p, aroma.period t
+where p.prodkey = s.prodkey
+and p.classkey = s.classkey
+and s.perkey = t.perkey
+group by p.prodkey, p.classkey, p.prod_name, p.pkg_type,t.week
+order by t.week, rang) as t(prodkey,classkey,prod_name,pkg_type,week,montant,rang)
+group by t.prodkey,t.classkey, t.prod_name, t.pkg_type
+
+# Montant moyen des ventes par jour de la semaine
+
+select ti.day, avg(ti.montant) as moyenne
+from (select t.day,sum(dollars)
+  from aroma.sales s, aroma.period t
+  where s.perkey = t.perkey
+  group by t.perkey,t.day) as ti(day,montant)
+group by ti.day
+order by moyenne desc
 
