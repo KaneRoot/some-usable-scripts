@@ -185,7 +185,7 @@ from aroma.sales s, aroma.product p
 where p.prodkey = s.prodkey
 and p.classkey = s.classkey
 group by p.prodkey, p.classkey, p.prod_name, p.pkg_type
-order by part desc
+order by part desc²
 
 # Montant des ventes des produits par semaine
 
@@ -229,3 +229,21 @@ from (select t.day,sum(dollars)
 group by ti.day
 order by moyenne desc
 
+
+MES REPONSES
+
+select c.class_type, SUM(s.dollars) as total
+	from aroma.class c, aroma.sales s, aroma.product p
+	where c.classkey = p.classkey 
+	and p.classkey = s.classkey
+	and p.prodkey = s.prodkey
+	group by c.class_type
+	order by total desc
+
+
+select c.class_type, dec(100*sum(s.dollars)/(select sum(dollars) from aroma.sales), 7,0)
+	from aroma.class c, aroma.product p, aroma.sales s
+	where c.classkey = p.classkey
+	and p.classkey = s.classkey
+	and p.prodkey = s.prodkey
+	group by c.class_type;
