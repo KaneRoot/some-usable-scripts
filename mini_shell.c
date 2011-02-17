@@ -35,12 +35,14 @@ int main(int argc, char **argv, char **env)
 	// Boucle principale qui attend les commandes
 	while(1)
 	{
-		if(UUID == 0)
+		if(UUID == 0) // Si l'utilisateur est root alors il a droit à son prompt personnalisé
 			printf("[ root ] %s # ", (char *) getenv("PWD"));
 		else
 			printf("[ %s ] %s $ ",(char *) getenv("USER"), (char *) getenv("PWD"));
+
 		arg1 = arg2 = arg3 = NULL;
 		commandeInterne = 0;
+
 		lire(&arg1, &arg2, &arg3);
 
 		if(arg1 != NULL)
@@ -53,7 +55,7 @@ int main(int argc, char **argv, char **env)
 			}
 			if(strcmp(arg1, "exit") == 0)
 			{
-				commandeInterne = 1;
+				commandeInterne = 1; // Écrit simplement pour rester cohérent, mais un peu inutile :)
 				exit(EXIT_SUCCESS);
 			}
 			if(commandeInterne == 0)
@@ -156,7 +158,9 @@ void execution(char *arg1, char *arg2, char *arg3, char **env)
 			signal(SIGINT, quitter);
 		}
 	}
-	free(options);
+	if(options != NULL) free(options);
+	if(arg1 != NULL) free(arg1);
+	
 }
 void changeDirectory(char * path)
 {
@@ -193,16 +197,22 @@ void lire(char** arg1, char** arg2, char** arg3)
 }
 char *lireChaine3() 
 {
-	char *ptr, *ptr1;
+	char *ptr, *ptr1 = NULL;
 	int c;
 	int i=0;
 	int nb=10;
 
-	ptr=malloc(nb);
+	ptr = malloc(nb);
 	assert(ptr);
 
-	while((c=getchar()) !=  '\n' && c != EOF) 
+	while((c=getchar()) !=  '\n' )
 	{
+		// Si on envoit EOF (^D) alors on quitte le shell (comme sur les shells qu'on utilise habituellement)
+		if(c == EOF)
+		{
+			printf("\n");
+			exit(EXIT_SUCCESS);
+		}
 		if (i==nb-1) 
 		{
 			ptr1=malloc(nb=nb*2);
@@ -228,6 +238,7 @@ char *lireChaine3()
 			free(ptr);
 			ptr=ptr1;
         }
+	ptr1 = NULL;
     return ptr;
 }
 void erreur(char *s)
@@ -247,14 +258,13 @@ void executionPipe(char *arg1, char *arg3, char **env)
 	{
 		int pipefd[2];
 		pipe(pipefd);
-		int fd0, fd2, pid;
-		FILE * fd00, *fd01, *fd02;
+		int pid2;
 		
 		char ** options = malloc(sizeof(char *)*3);
 		options[0] = arg1;
 		options[1] = NULL;
 
-		if((pid = fork()) == 0) // Dans le fils : exécution de la première commande
+		if((pid2 = fork()) == 0) // Dans le fils : exécution de la première commande
 		{
 			close(pipefd[0]);
 			close(1); dup(pipefd[1]);
