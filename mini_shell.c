@@ -9,6 +9,9 @@
 #include <string.h>
 #include <stdlib.h>
 
+#define TAILLE_BUFFER 200
+char * path2;
+
 void lire(char **, char **, char **);
 char * lireChaine3();
 void changeDirectory(char * path);
@@ -27,10 +30,15 @@ int main(int argc, char **argv, char **env)
 	signal(SIGINT, quitter);
 	signal(SIGQUIT, quitter);
 
+	int UUID;
+	UUID = geteuid();
 	// Boucle principale qui attend les commandes
 	while(1)
 	{
-		printf("[ %s ] %s $ ",(char *) getenv("USER"), (char *) getenv("PWD"));
+		if(UUID == 0)
+			printf("[ root ] %s # ", (char *) getenv("PWD"));
+		else
+			printf("[ %s ] %s $ ",(char *) getenv("USER"), (char *) getenv("PWD"));
 		arg1 = arg2 = arg3 = NULL;
 		commandeInterne = 0;
 		lire(&arg1, &arg2, &arg3);
@@ -121,8 +129,11 @@ void execution(char *arg1, char *arg2, char *arg3, char **env)
 				}
 				else // Sinon on attend la fin d'exécution du fils
 				{
+					signal(SIGINT, SIG_IGN);
 					waitpid(pid, &status, 0 );
-					if(status != 0)
+					signal(SIGINT, quitter);
+
+					if(status == EXIT_FAILURE )
 						erreur("Soucis avec le fils");
 				}
 			}
@@ -139,7 +150,11 @@ void execution(char *arg1, char *arg2, char *arg3, char **env)
 			exit(EXIT_FAILURE);
 		}
 		else
+		{
+			signal(SIGINT, SIG_IGN);
 			waitpid(pid, &status, 0);
+			signal(SIGINT, quitter);
+		}
 	}
 	free(options);
 }
@@ -152,12 +167,18 @@ void changeDirectory(char * path)
 	}
 	else
 	{
-		DIR * repertoire = opendir(path); // A REPRENDRE
-		struct dirent * rep = readdir(repertoire);
-		if(chdir(path) != 0) 
+		if(chdir(path) != 0)
+		{
 			erreur("Impossible de changer de répertoire");
+		}
 		else
-			setenv("PWD",path, 1);
+		{
+			if(path2 == NULL)
+				path2 = (char *) malloc(TAILLE_BUFFER * sizeof(char *));
+
+			getcwd(path2, TAILLE_BUFFER);
+			setenv("PWD",path2, 1);
+		}
 	}
 }
 void lire(char** arg1, char** arg2, char** arg3) 
@@ -254,7 +275,9 @@ void executionPipe(char *arg1, char *arg3, char **env)
 	}
 	else
 	{
+		signal(SIGINT, SIG_IGN);
 		waitpid(pid, &status, 0);
+		signal(SIGINT, quitter);
 	}
 }
 void quitter(int signal)
