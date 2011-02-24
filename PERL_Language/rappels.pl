@@ -191,3 +191,127 @@ $refv = \$v;
 
 $$refv est équivalent à $v
 
+références sur tableau
+t = $reft
+@t = @$reft
+$t[i] = $$reft[i]
+$t[i] = $reft->[i]
+
+Contrer l''aplatissement des listes 
+my @t1 = ( 16, -33 );
+my @t2 = ( "el", 0.3, 4 );
+my @t = ( 6, \@t1, \@t2, "s" );
+
+my %h = ("truc" => "machin");
+my $refh = \%h;
+foreach my $k (keys %$refh)
+{
+	print "$k $refh->{$k}\n";
+}
+
+foreach my $p (@$r)
+{
+	if( ref($p) eq "ARRAY" )
+	{
+		print "( ";
+		foreach my $v (@$p)
+		{ print "$v "; }
+		print ")\n";
+	}
+	elsif( ref($p) eq "HASH" )
+	{
+		foreach my $k (keys(%$p))
+		{ print "$k : $p->{$k}\n"; }
+	}
+	elsif( !ref($p) )
+	{
+		print "$p\n";
+	}
+}
+
+références 
+my $r = ["truc","bidule"];  = référence anonyme sur tableau
+my $r = {"truc" => "bidule"} = référence anonyme sur hash
+
+pour libérer la mémoire 
+$r = undef;
+
+Référence sur fichier
+open(FILE,">toto") or die("$!");
+my $reff = \*FILE;
+print $reff "ok\n";
+sub affiche
+{
+	my ($ref) = @_;
+	print $ref "ok\n";
+}
+affiche( $reff );
+affiche( \*FILE ); # équivalent
+close( $reff );
+
+Référence sur fonction
+sub affcoucou
+{
+	my ($p) = @_;
+	print "Coucou $p\n";
+}
+my $ref = \&affcoucou;
+
+&$ref("Larry"); # appel
+$ref->("Larry"); # équivalent
+sub f
+{
+	my ($f,$p) = @_;
+	$f->( $p );
+}
+f( $ref, "Larry" );
+f( \&affcoucou, "Larry" ); # équivalent
+
+MODULES
+
+utilisation
+use nomdu::module;
+
+écriture d_un module : se finit toujours par .pm comme Truc/Utils.pm
+
+package Utils;
+use strict;
+use Exporter;
+our @ISA = qw(Exporter);
+our @EXPORT = qw(&bonjour $var);
+our @EXPORT_OK = qw(&gutenTag &ciao $var2);
+
+Les exports dans %EXPORT_TAGS doivent être dans @EXPORT ou @EXPORT_OK
+our %EXPORT_TAGS=(T1=>[qw(&ciao &gutenTag)],
+		T2=>[qw(&ciao $var2)]);
+
+
+our $var;
+sub bonjour
+{
+	my ($prenom) = @_;
+	print "Bonjour $prenom\n";
+}
+1;
+
+utilisation
+
+use strict;
+
+use Truc::Utils;
+Truc::Utils::bonjour( "Paul" );
+
+OU 
+avec export par défaut
+use Utils;
+bonjour("coucou");
+OU 
+avec export individuel + export par défaut
+use Utils qw(:DEFAULT &ciao $var2);
+ciao("coucou");
+
+OU
+avec export par tag
+use Utils qw(:DEFAULT &ciao :T2 );
+
+
