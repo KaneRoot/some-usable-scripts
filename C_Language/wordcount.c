@@ -1,6 +1,8 @@
 #include <stdio.h>
+#include <string.h>
 
 int lirechl(char *s, int n);
+void squeeze( char *s , char *t, char c);
 
 int lirechl(char *s, int n)
 {
@@ -20,9 +22,12 @@ int lirechl(char *s, int n)
 int main()
 {
 	char string[10];
-	int bla = lirechl(&string[0], 7);
-	printf("Nombre de caracteres jusqu'a saut de ligne : %d \n",bla);
+	printf("Écrivez puis appuyez sur 'Entrée' : ");
+	int nb = lirechl(&string[0], 7);
+	printf("Nombre de caracteres jusqu'à saut de ligne : %d \n",nb);
 }
+
+// This is for another exercise.
 void squeeze( char *s , char *t, char c)
 {	
 	int i = 0;
