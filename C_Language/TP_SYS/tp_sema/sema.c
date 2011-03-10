@@ -9,26 +9,6 @@
 #include <sys/ipc.h>
 #include <sys/sem.h>
 
-
-/*void erreurMes(char * format, ...)
-{
-char texte[200];
-va_list liste_arguments;
-
-va_start(liste_arguments,format);
-
-vsnprintf(texte,200,format,liste_arguments);
-
-va_end(liste_arguments);
-
-if(errno)
-      perror(texte);
-else
-       fprintf(stderr,texte);
-  exit(1);
-}
-*/
-
 /*-----------------------------------------------------------*/
 
 int creat_sem(key_t cle,int val)
