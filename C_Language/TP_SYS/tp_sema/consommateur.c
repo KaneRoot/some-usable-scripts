@@ -2,6 +2,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include "constantes.h"
+#include "types.h"
 
 int main( int argc, char **argv)
 {

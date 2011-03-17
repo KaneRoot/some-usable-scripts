@@ -1,3 +1,5 @@
+#include "constantes.h"
+
 typedef MEMP // Structure de sémaphore
 {
 	int max_prod;

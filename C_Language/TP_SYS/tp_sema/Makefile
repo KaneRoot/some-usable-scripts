@@ -9,10 +9,10 @@ all: $(COMMUN) $(CONSOM) $(PRODUCT)
 		$(CC) $(CONSOM) -o $(CONS)
 		$(CC) $(PRODUCT) -o $(PROD)
 
-consommateur.o : consommateur.c consommateur.h constantes.h
+consommateur.o : consommateur.c consommateur.h constantes.h types.h
 	$(CC) -o $@ -c $< $(CFLAGS)
 
-producteur.o : producteur.c producteur.h constantes.h
+producteur.o : producteur.c producteur.h constantes.h types.h
 	$(CC) -o $@ -c $< $(CFLAGS)
 
 sema.o : sema.h sema.c
