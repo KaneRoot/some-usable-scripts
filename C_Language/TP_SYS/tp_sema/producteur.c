@@ -10,7 +10,7 @@
 
 int main( int argc, char **argv)
 {
-	if(argc < 3) { printf("Usage %s numIPC message\n", argv[0]); exit(EXIT_FAILURE); }
+	if(argc < 2) { printf("Usage %s numIPC\n", argv[0]); exit(EXIT_FAILURE); }
 	int *zone; 
 	int memid; 
 	int clef = atoi(argv[1]);
