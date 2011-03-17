@@ -1,5 +1,4 @@
-C = gcc
-SER = server
+CC = gcc
 CONS = consommateur
 PROD = producteur
 CFLAGS = -Wall -g
@@ -8,12 +7,12 @@ CONSOM = consommateur.o
 PRODUCT = producteur.o
 all: $(CONSOM) $(PRODUCT) 
 		$(CC) $(CONSOM) -o $(CONS)
-		$(CC) $(PRODUCT) -o $(SER)
+		$(CC) $(PRODUCT) -o $(PROD)
 
-consommateur.o : consommateur.h consommateur.c
+consommateur.o : consommateur.c consommateur.h
 	$(CC) -o $@ -c $< $(CFLAGS)
 
-producteur.o : producteur.h producteur.c
+producteur.o : producteur.c producteur.h
 	$(CC) -o $@ -c $< $(CFLAGS)
 
 sema.o : sema.h sema.c
@@ -22,5 +21,5 @@ sema.o : sema.h sema.c
 clean:
 	@rm -rf *.o *.out
 mrproper: clean
-	@rm $(PROD) $(CONS) 2>/dev/null
+	rm $(PROD) $(CONS) 2>/dev/null
 
