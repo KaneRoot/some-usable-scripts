@@ -8,13 +8,6 @@
 #include <sys/types.h>
 #include <sys/ipc.h>
 #include <sys/sem.h>
-
-/*-----------------------------------------------------------*/
-
-/* creation du semaphore cle ayant comme valeur initiale val
-   retourne un identificateur de semaphore >=0 ou -1 si erreur
-*/
-
 int creat_sem(key_t cle,int val)
 {
 	int semid;
@@ -33,24 +26,10 @@ int creat_sem(key_t cle,int val)
     }
     return(semid);
 }
-
-/*--------------------------------------------------------------*/
-
-/* destruction du semaphore cle 
-   retourne:
-	0 si la destruction du semaphore s est effectuee correctement
-       -1 si erreur
-*/
-
 int del_sem(key_t cle)
 {
     return(semctl((semget(cle,0,0)),0,IPC_RMID,0));
 }
-
-/* recherche le semaphore cle
-   retourne l'identificateur du semaphore >=0 ou -1 si erreur
-*/
-
 int open_sem(key_t cle)
 {
 	return(semget(cle,0,0));
