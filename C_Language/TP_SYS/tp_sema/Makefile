@@ -5,21 +5,25 @@ CFLAGS = -Wall -g
 COMMUN = sema.o global.o 
 CONSOM = consommateur.o
 PRODUCT = producteur.o
-all: $(CONSOM) $(PRODUCT) 
+all: $(COMMUN) $(CONSOM) $(PRODUCT)
 		$(CC) $(CONSOM) -o $(CONS)
 		$(CC) $(PRODUCT) -o $(PROD)
 
-consommateur.o : consommateur.c consommateur.h
+consommateur.o : consommateur.c consommateur.h constantes.h
 	$(CC) -o $@ -c $< $(CFLAGS)
 
-producteur.o : producteur.c producteur.h
+producteur.o : producteur.c producteur.h constantes.h
 	$(CC) -o $@ -c $< $(CFLAGS)
 
 sema.o : sema.h sema.c
 	$(CC) -o $@ -c $< $(CFLAGS)
 
+global.o : global.c
+	$(CC) -o $@ -c $< $(CFLAGS)
+
+
 clean:
 	@rm -rf *.o *.out
 mrproper: clean
-	rm $(PROD) $(CONS) 2>/dev/null
+	@rm $(PROD) $(CONS) 2>/dev/null
 
