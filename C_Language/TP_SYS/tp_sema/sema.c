@@ -8,6 +8,8 @@
 #include <sys/types.h>
 #include <sys/ipc.h>
 #include <sys/sem.h>
+#include "sema.h"
+
 int creat_sem(key_t cle,int val)
 {
 	int semid;
