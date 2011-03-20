@@ -26,8 +26,8 @@ int main( int argc, char **argv)
 	if(argc < 2) { printf("Usage : %s nSHM \n", argv[0]); exit(EXIT_FAILURE); }
 
 	shm_key = (key_t) atoi(argv[1]);
-	sem_key_tpa = MUTEX_1;
-	sem_key_data = MUTEX_2;
+	sem_key_tpa = MUTEX_TPA;
+	sem_key_data = MUTEX_DATA;
 
 	MEMP * memoireP;
 
