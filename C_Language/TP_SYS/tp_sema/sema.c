@@ -10,6 +10,8 @@
 #include <sys/sem.h>
 #include "sema.h"
 
+typedef unsigned short int ushort;
+
 int creat_sem(key_t cle,int val)
 {
 	int semid;

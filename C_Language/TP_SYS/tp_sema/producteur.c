@@ -31,9 +31,10 @@ int main( int argc, char **argv)
 	if((mutex_tpa = creat_sem( sem_key_tpa, 1)) == -1)
 	{ perror("creat_sem"); exit(EXIT_FAILURE); }
 
-	P(mutex_data);
+
+		P(mutex_data);
 		
-	V(mutex_data);
+		V(mutex_data);
 	
 /* utilisation */
 //	printf("memoireP[0] = %d\n", memoireP[0]++ );
