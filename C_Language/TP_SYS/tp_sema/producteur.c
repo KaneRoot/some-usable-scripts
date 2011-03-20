@@ -13,7 +13,7 @@ int main( int argc, char **argv)
 {
 	if(argc < 2) { printf("Usage %s numIPC\n", argv[0]); exit(EXIT_FAILURE); }
 	MEMP *memoireP; 
-	int mutex_data, mutex_tpa, mutex_glob, continuer = 0, i=0;
+	int mutex_data, mutex_tpa, sem_global, continuer = 0, i=0;
 	char c;
 	MSG message;
 	key_t sem_key_data = MUTEX_DATA;
@@ -28,9 +28,10 @@ int main( int argc, char **argv)
 	if((memoireP = (MEMP *) shmat(shmid, 0 , 0766)) ==(void *) -1)	{ perror("shmat"); exit(EXIT_FAILURE); }
 	if((mutex_data = open_sem( sem_key_data)) == -1)	{ perror("open_sem"); exit(EXIT_FAILURE); }
 	if((mutex_tpa = open_sem( sem_key_tpa)) == -1)		{ perror("open_sem"); exit(EXIT_FAILURE); }
-	if((mutex_glob = open_sem( sem_key_glob)) == -1)	{ perror("open_sem"); exit(EXIT_FAILURE); }
+	if((sem_global = open_sem( sem_key_glob)) == -1)	{ perror("open_sem"); exit(EXIT_FAILURE); }
 
-	P(mutex_glob);
+	// sem_global est un sémaphore à MAX_PROD entrants.
+	P(sem_global);
 	P(mutex_tpa);
 		for(i = 0; i < MAX_PROD && memoireP->tpa[i] != -1 ; i++);
 	V(mutex_tpa);
@@ -38,23 +39,25 @@ int main( int argc, char **argv)
 	if(memoireP->tpa[i] != -1) { exit(EXIT_FAILURE); }
 	memoireP->tpa[i] = 0;
 
-	memoireP->tpa[i] = getpid();
-
+	// On quitte le producteur en tappant 0 (zéro)
 	while((c = getc(stdin)) != '0')
 	{
 		P(mutex_data);
 			if(((memoireP->queue -1) % MAX_BUF) != (memoireP->tete % MAX_BUF) )
 			{
 				memoireP->f[memoireP->tete].c = c;
-				memoireP->f[memoireP->tete].idp = getpid();
+				memoireP->f[memoireP->tete].idp = i;
 				memoireP->tete = memoireP->tete +1;
 			}
-			
 		V(mutex_data);
 	}
+	// On a fini, on remet la valeur de l'indice du processus à -1 dans le tableau des producteurs
 	P(mutex_tpa);
+		memoireP->tpa[i] = -1;	
 	V(mutex_tpa);
-	V(mutex_glob);
+
+	// On a fini, on libère l'accès à un autre producteur
+	V(sem_global);
 	return (EXIT_SUCCESS); 
 
 }

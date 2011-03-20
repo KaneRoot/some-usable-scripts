@@ -33,6 +33,17 @@ int main( int argc, char **argv)
 	shm_key = (key_t) atoi(argv[1]);
 	MEMP * memoireP;
 
+    const char CTRL_D = 4 ;
+
+	int NB_FENETRES = 4;
+    WINDOW *f_haut, *f_bas, *f_milieu1, *f_milieu2 ;
+    WINDOW *w ;
+    char c ;
+
+    initscr() ;			/* initialisation (obligatoire) de curses */
+    noecho() ;			/* suppression de l'echo des caracteres tapes*/
+    cbreak() ;			/* lecture non bufferisee */
+
 	if((shmid = shmget(shm_key, sizeof(MEMP), IPC_CREAT|IPC_EXCL|0766)) == -1) 
 	{ perror("shmget"); exit(EXIT_FAILURE);}
 	
@@ -61,42 +72,61 @@ int main( int argc, char **argv)
 	V(mutex_tpa);
 
 
-	sleep(10);
-
-
-    const char CTRL_D = 4 ;
-
-	int NB_FENETRES = 4;
-    WINDOW *f_haut, *f_bas, *f_milieu1, *f_milieu2 ;
-    WINDOW *w ;
-    char c ;
-
-    initscr() ;			/* initialisation (obligatoire) de curses */
-    noecho() ;			/* suppression de l'echo des caracteres tapes*/
-    cbreak() ;			/* lecture non bufferisee */
-
     f_haut = creation_fenetre(LINES/NB_FENETRES,0,"F_HAUT") ;
     f_milieu1 = creation_fenetre(LINES/NB_FENETRES,LINES - 3 * (LINES/NB_FENETRES),"F_MILIEU1") ;
     f_milieu2 = creation_fenetre(LINES/NB_FENETRES,LINES - 2 * (LINES/NB_FENETRES),"F_MILIEU2") ;
     f_bas = creation_fenetre(LINES/NB_FENETRES, LINES - (LINES/NB_FENETRES),"F_BAS") ;
 
-    while (( c = wgetch(f_bas)) != CTRL_D)
+	sleep(5);
+	// aDesProd => est-ce qu'il y a des producteur (sinon on quitte)
+	// si = 0 alors on continue
+	int aDesProd;
+	int numTete = 0;
+
+    while (1)
     {
-        w= islower(c) ? f_haut : f_bas;
-        waddch(w,c) ;
-        wrefresh(w) ; 
+		aDesProd = 0;
+		P(mutex_data);
+		if(numTete != memoireP->tete)
+		{
+			numTete = memoireP->tete;
+			c = memoireP->f[numTete].c;
+			switch(memoireP->f[numTete].idp)
+			{
+				case 0 : w = f_haut;
+					break;
+				case 1 : w = f_milieu1;
+					break;
+				case 2 : w = f_milieu2;
+					break;
+				default :
+					w = f_bas;
+			}
+			waddch(w,c) ;
+			wrefresh(w) ; 
+		}
+		V(mutex_data);
+		// On vérifie qu'il y ait toujours des producteurs
+		for(i = 0 ; i < MAX_PROD && aDesProd == 0 ; i++ )
+			if(memoireP->tpa[i] != -1)
+				aDesProd = 1;
+
+		// S'il n'y a plus de producteurs, on quitte
+		if(aDesProd == 0)
+		{
+			if(shmctl(shmid, IPC_RMID, 0) < 0)
+			{ perror("shmctl"); exit(EXIT_FAILURE); }
+		
+			if(mutex_data >= 0) { del_sem(sem_key_data); }
+			if(mutex_tpa >= 0) { del_sem(sem_key_tpa); }
+			if(mutex_glob >= 0) { del_sem(sem_key_glob); }
+
+			endwin() ;
+			exit(EXIT_SUCCESS);
+		}
+		sleep(1); // Ralentissement volontaire du programme
     }
-
-    endwin() ;
-
-	if(shmctl(shmid, IPC_RMID, 0) < 0)
-	{ perror("shmctl"); exit(EXIT_FAILURE); }
-
-	if(mutex_data >= 0) { del_sem(sem_key_data); }
-	if(mutex_tpa >= 0) { del_sem(sem_key_tpa); }
-	if(mutex_glob >= 0) { del_sem(sem_key_glob); }
-
-	exit(EXIT_SUCCESS);
+	exit(EXIT_FAILURE);
 }
 
 WINDOW *creation_fenetre(int n,int d,char *t)
