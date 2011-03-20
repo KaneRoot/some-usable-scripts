@@ -22,7 +22,6 @@ int main( int argc, char **argv)
 	int mutex_data, mutex_tpa;
 	key_t sem_key_data;
 	key_t sem_key_tpa;
-	const char CTRL_D = 4;
 
 	if(argc < 2) { printf("Usage : %s nSHM \n", argv[0]); exit(EXIT_FAILURE); }
 
@@ -38,11 +37,10 @@ int main( int argc, char **argv)
 	if((memoireP = (MEMP *) shmat(shmid, 0 , 0766)) == (void *) -1)
 	{ perror("shmat"); exit(EXIT_FAILURE); }
 		
-	// MUTEX_2  => DATA
-	if((mutex_data = creat_sem( sem_key_data, MAX_PROD)) == -1)
+	if((mutex_data = creat_sem( sem_key_data, 1)) == -1)
 	{ perror("creat_sem"); exit(EXIT_FAILURE); }
 
-	if((mutex_tpa = creat_sem( sem_key_tpa, MAX_PROD)) == -1)
+	if((mutex_tpa = creat_sem( sem_key_tpa, 1)) == -1)
 	{ perror("creat_sem"); exit(EXIT_FAILURE); }
 
 	P(mutex_data);
@@ -51,9 +49,10 @@ int main( int argc, char **argv)
 		memoireP->queue = 0;
 	V(mutex_data);
 		
+	P(mutex_tpa);
 		for(int i = 0; i < MAX_PROD ; i++)
 			memoireP->tpa[i] = -1;
-
+	V(mutex_tpa);
 
 
 	sleep(10);
