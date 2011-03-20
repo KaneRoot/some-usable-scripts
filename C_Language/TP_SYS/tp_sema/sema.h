@@ -1,6 +1,9 @@
 
 void erreur(char *s);
 int open_sem(key_t cle);
+/* recherche le semaphore cle
+   retourne l'identificateur du semaphore >=0 ou -1 si erreur
+*/
 void P(int semid);
 void V(int semid);
 
@@ -19,11 +22,4 @@ int del_sem(key_t cle);
 	0 si la destruction du semaphore s est effectuee correctement
        -1 si erreur
 */
-
-/* recherche le semaphore cle
-   retourne l'identificateur du semaphore >=0 ou -1 si erreur
-*/
-
-
-
 

@@ -1,11 +1,11 @@
 CC = gcc
 CONS = consommateur
 PROD = producteur
-CFLAGS = -Wall -g -std=c99
+CFLAGS = -lncurses -Wall -g -std=c99 -D_XOPEN_SOURCE -D_SVID_SOURCE
 COMMUN = sema.o global.o 
 all: $(COMMUN) consommateur.o producteur.o
-		$(CC) consommateur.o -o $(CONS) sema.o
-		$(CC) producteur.o -o $(PROD) sema.o
+		$(CC) consommateur.o -o $(CONS) sema.o $(CFLAGS)
+		$(CC) producteur.o -o $(PROD) sema.o $(CFLAGS)
 
 sema.o : sema.c sema.h
 	$(CC) -o $@ -c $< $(CFLAGS)
