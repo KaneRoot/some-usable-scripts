@@ -1,10 +1,10 @@
 CC = gcc
 CONS = consommateur
 PROD = producteur
-CFLAGS = -Wall -g
+CFLAGS = -Wall -g 
 COMMUN = sema.o global.o 
 all: $(COMMUN) consommateur.o producteur.o
-		$(CC) consommateur.o -o $(CONS) sema.o
+		$(CC) consommateur.o -o $(CONS) -std=c99 sema.o
 		$(CC) producteur.o -o $(PROD) sema.o
 
 sema.o : sema.c sema.h
