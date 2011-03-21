@@ -72,15 +72,17 @@ int main( int argc, char **argv)
 	V(mutex_tpa);
 
 
+	// Création des fenêtres MARCHE
     f_haut = creation_fenetre(LINES/NB_FENETRES,0,"F_HAUT") ;
     f_milieu1 = creation_fenetre(LINES/NB_FENETRES,LINES - 3 * (LINES/NB_FENETRES),"F_MILIEU1") ;
     f_milieu2 = creation_fenetre(LINES/NB_FENETRES,LINES - 2 * (LINES/NB_FENETRES),"F_MILIEU2") ;
     f_bas = creation_fenetre(LINES/NB_FENETRES, LINES - (LINES/NB_FENETRES),"F_BAS") ;
 
 	sleep(5);
-	// aDesProd => est-ce qu'il y a des producteur (sinon on quitte)
-	// si = 0 alors on continue
+	// aDesProd => est-ce qu'il y a des producteur (si 0 on quitte)
 	int aDesProd;
+
+	// numTete est un entier qui détermine la "tête" courante. Si elle a changé, c'est qu'on a ajouté un caractère
 	int numTete = 0;
 
     while (1)
@@ -90,14 +92,17 @@ int main( int argc, char **argv)
 		if(numTete != memoireP->tete)
 		{
 			numTete = memoireP->tete;
-			c = memoireP->f[numTete].c;
+			c = (char) memoireP->f[numTete].c;
 			switch(memoireP->f[numTete].idp)
 			{
-				case 0 : w = f_haut;
+				case 0 : 
+					w = f_haut;
 					break;
-				case 1 : w = f_milieu1;
+				case 1 : 
+					w = f_milieu1;
 					break;
-				case 2 : w = f_milieu2;
+				case 2 : 
+					w = f_milieu2;
 					break;
 				default :
 					w = f_bas;
@@ -106,7 +111,8 @@ int main( int argc, char **argv)
 			wrefresh(w) ; 
 		}
 		V(mutex_data);
-		// On vérifie qu'il y ait toujours des producteurs
+
+		// On vérifie qu'il y ait toujours des producteurs MARCHE
 		for(i = 0 ; i < MAX_PROD && aDesProd == 0 ; i++ )
 			if(memoireP->tpa[i] != -1)
 				aDesProd = 1;
@@ -124,7 +130,7 @@ int main( int argc, char **argv)
 			endwin() ;
 			exit(EXIT_SUCCESS);
 		}
-		sleep(1); // Ralentissement volontaire du programme
+		usleep(10); // Ralentissement volontaire du programme
     }
 	exit(EXIT_FAILURE);
 }

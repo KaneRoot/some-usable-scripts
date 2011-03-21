@@ -49,6 +49,7 @@ int main( int argc, char **argv)
 				memoireP->f[memoireP->tete].idp = i;
 				memoireP->tete = memoireP->tete +1;
 			}
+			fprintf(stdout, "Voici le caractère écrit : %c\n", memoireP->f[memoireP->tete].c);
 		V(mutex_data);
 	}
 	// On a fini, on remet la valeur de l'indice du processus à -1 dans le tableau des producteurs
