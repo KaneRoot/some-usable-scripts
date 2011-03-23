@@ -102,7 +102,7 @@ int main( int argc, char **argv)
 
 		P(mutex_data);
 			vartemp = (int) memoireP->tete;
-			msgtemp = (MSG) memoireP->f[vartemp];
+			msgtemp = (MSG) memoireP->f[vartemp -1 ];
 		V(mutex_data);
 
 		if(numTete != vartemp)
