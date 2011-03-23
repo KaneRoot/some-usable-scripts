@@ -19,6 +19,11 @@
 #include "constantes.h"
 
 WINDOW *creation_fenetre(int n,int d,char *t);
+typedef struct prod_s
+{
+	int idp;
+	WINDOW w;
+} PROD;
 
 int main( int argc, char **argv)
 {
@@ -32,11 +37,13 @@ int main( int argc, char **argv)
 
 	shm_key = (key_t) atoi(argv[1]);
 	MEMP * memoireP;
+	MEMP temp;
+	MSG msgtemp;
+	PROD tprod[MAX_PROD];
 
-    const char CTRL_D = 4 ;
-
-	int NB_FENETRES = 4;
-    WINDOW *f_haut, *f_bas, *f_milieu1, *f_milieu2 ;
+	int NB_FENETRES = 1;
+	WINDOW *f_haut, *f_bas, *f_milieu1, *f_milieu2;
+    //WINDOW **tWindow;
     WINDOW *w ;
     char c ;
 
@@ -59,18 +66,23 @@ int main( int argc, char **argv)
 	if((mutex_glob = creat_sem( sem_key_glob, 1)) == -1)
 	{ perror("creat_sem"); exit(EXIT_FAILURE); }
 
-	P(mutex_data);
-	
-		memoireP->tete = 0;
-		memoireP->queue = 0;
+	temp.tete = 0;
+	temp.queue = 0;
 
+	for( i = 0; i < MAX_PROD ; i++)
+		temp.tpa[i] = -1;
+
+	P(mutex_data);
+		*memoireP = temp;
 	V(mutex_data);
 		
-	P(mutex_tpa);
-		for( i = 0; i < MAX_PROD ; i++)
-			memoireP->tpa[i] = -1;
-	V(mutex_tpa);
+	sleep(5);
+	// nbDeProd => est-ce qu'il y a des producteur (si 0 on quitte)
+	int nbDeProd;
 
+	// numTete est un entier qui détermine la "tête" courante. Si elle a changé, c'est qu'on a ajouté un caractère
+	int numTete = 0;
+	int vartemp;
 
 	// Création des fenêtres MARCHE
     f_haut = creation_fenetre(LINES/NB_FENETRES,0,"F_HAUT") ;
@@ -78,47 +90,40 @@ int main( int argc, char **argv)
     f_milieu2 = creation_fenetre(LINES/NB_FENETRES,LINES - 2 * (LINES/NB_FENETRES),"F_MILIEU2") ;
     f_bas = creation_fenetre(LINES/NB_FENETRES, LINES - (LINES/NB_FENETRES),"F_BAS") ;
 
-	sleep(5);
-	// aDesProd => est-ce qu'il y a des producteur (si 0 on quitte)
-	int aDesProd;
-
-	// numTete est un entier qui détermine la "tête" courante. Si elle a changé, c'est qu'on a ajouté un caractère
-	int numTete = 0;
-
     while (1)
     {
-		aDesProd = 0;
+		// On (re)met nbDeProd à 0 
+		nbDeProd = 0;
+
+		// On vérifie qu'il y ait toujours des producteurs MARCHE
+		for(i = 0 ; i < MAX_PROD && nbDeProd == 0 ; i++ )
+			if(memoireP->tpa[i] != -1)
+				nbDeProd++;
+
 		P(mutex_data);
-		if(numTete != memoireP->tete)
+			vartemp = (int) memoireP->tete;
+			msgtemp = (MSG) memoireP->f[vartemp];
+		V(mutex_data);
+
+		if(numTete != vartemp)
 		{
-			numTete = memoireP->tete;
-			c = (char) memoireP->f[numTete].c;
-			switch(memoireP->f[numTete].idp)
-			{
-				case 0 : 
-					w = f_haut;
-					break;
-				case 1 : 
-					w = f_milieu1;
-					break;
-				case 2 : 
-					w = f_milieu2;
-					break;
-				default :
-					w = f_bas;
-			}
+			numTete = vartemp;
+			c = msgtemp.c;
+			//w =  tprod[msgtemp.idp].w;
+			w = f_haut;
+
 			waddch(w,c) ;
 			wrefresh(w) ; 
 		}
+
+		P(mutex_data);
+			vartemp = (int) memoireP->queue;
+			vartemp = (vartemp +1) % MAX_BUF;
+			memoireP->queue = vartemp;
 		V(mutex_data);
 
-		// On vérifie qu'il y ait toujours des producteurs MARCHE
-		for(i = 0 ; i < MAX_PROD && aDesProd == 0 ; i++ )
-			if(memoireP->tpa[i] != -1)
-				aDesProd = 1;
-
 		// S'il n'y a plus de producteurs, on quitte
-		if(aDesProd == 0)
+		if(nbDeProd == 0)
 		{
 			if(shmctl(shmid, IPC_RMID, 0) < 0)
 			{ perror("shmctl"); exit(EXIT_FAILURE); }
