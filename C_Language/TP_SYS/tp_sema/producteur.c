@@ -11,18 +11,19 @@
 #include "types.h"
 #include "sema.h"
 
+#define NAMESIZE 30
+
 WINDOW *creation_fenetre(int n,int d,char *t);
 int main( int argc, char **argv)
 {
 	if(argc < 2) { printf("Usage %s numIPC\n", argv[0]); exit(EXIT_FAILURE); }
 	MEMP *memoireP; 
-	MSG temp;
-	int mutex_data, mutex_tpa, sem_global, continuer = 0, i=0, tete;
+	int mutex_data, mutex_tpa, sem_global, i=0;
 	char c;
-	MSG message;
     const char CTRL_D = 4 ;
 	int shmid; 
 	int shm_key = atoi(argv[1]);
+	char * nom_de_la_fenetre = NULL;
 
     WINDOW * fenetre ;
 
@@ -47,12 +48,15 @@ int main( int argc, char **argv)
 	//P(sem_global);
 	P(mutex_tpa);
 		for(i = 0; i < MAX_PROD && memoireP->tpa[i] != -1 ; i++);
+		if(memoireP->tpa[i] != -1) { V(mutex_tpa); exit(EXIT_FAILURE); }
+		memoireP->tpa[i] = 0;
 	V(mutex_tpa);
-	
-	if(memoireP->tpa[i] != -1) { exit(EXIT_FAILURE); }
-	memoireP->tpa[i] = 0;
 
-    fenetre = creation_fenetre(LINES,0,"PRODUCTEUR") ;
+
+	// Je donne un nom à ma fenêtre
+	nom_de_la_fenetre = (char *) malloc(sizeof(char *) * NAMESIZE);
+	snprintf(nom_de_la_fenetre, NAMESIZE, "PRODUCTEUR %d", i);
+    fenetre = creation_fenetre(LINES,0,nom_de_la_fenetre);
 
 	// On quitte le producteur en tappant CTRL_D
     while (( c = wgetch(fenetre)) != CTRL_D)
@@ -61,13 +65,14 @@ int main( int argc, char **argv)
 		P(mutex_data);
 			if(((memoireP->queue -1) % MAX_BUF) != (memoireP->tete % MAX_BUF) )
 			{
-				temp = (MSG) memoireP->f[memoireP->tete];
-				temp.c = (char) c;
-				temp.idp = i;
-				tete = (int) memoireP->tete;
-				memoireP->f[tete] = (MSG) temp;
-				tete++;
-				memoireP->tete = (int) tete;
+				memoireP->f[memoireP->tete].c = c;
+				memoireP->f[memoireP->tete].idp = i;
+				//temp.c = (char) c;
+				//temp.idp = i;
+				//tete = (int) memoireP->tete;
+				//memoireP->f[tete] = (MSG) temp;
+				//tete++;
+				memoireP->tete++;// = (int) tete;
 			}
 		V(mutex_data);
 
@@ -83,7 +88,11 @@ int main( int argc, char **argv)
 	//V(sem_global);
 
     endwin();
-	return (EXIT_SUCCESS); 
+
+	// On libère la mémoire de façon propre
+	free(nom_de_la_fenetre);
+
+	exit(EXIT_SUCCESS); 
 
 }
 
