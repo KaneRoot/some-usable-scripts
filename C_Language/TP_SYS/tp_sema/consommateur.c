@@ -30,10 +30,9 @@ int main( int argc, char **argv)
 	if(argc < 2) { printf("Usage : %s nSHM \n", argv[0]); exit(EXIT_FAILURE); }
 
 	int shmid, shm_key, i = 0;
-	int mutex_data, mutex_tpa, mutex_glob;
+	int mutex_data, mutex_tpa;
 	key_t sem_key_data = MUTEX_DATA;
 	key_t sem_key_tpa = MUTEX_TPA;
-	key_t sem_key_glob = MUTEX_GLOB;
 
 	shm_key = (key_t) atoi(argv[1]);
 	MEMP * memoireP;
@@ -61,9 +60,6 @@ int main( int argc, char **argv)
 	{ perror("creat_sem"); exit(EXIT_FAILURE); }
 
 	if((mutex_tpa = creat_sem( sem_key_tpa, 1)) == -1)
-	{ perror("creat_sem"); exit(EXIT_FAILURE); }
-
-	if((mutex_glob = creat_sem( sem_key_glob, 1)) == -1)
 	{ perror("creat_sem"); exit(EXIT_FAILURE); }
 
 	temp.tete = 0;
@@ -130,7 +126,6 @@ int main( int argc, char **argv)
 		
 			if(mutex_data >= 0) { del_sem(sem_key_data); }
 			if(mutex_tpa >= 0) { del_sem(sem_key_tpa); }
-			if(mutex_glob >= 0) { del_sem(sem_key_glob); }
 
 			endwin() ;
 			exit(EXIT_SUCCESS);

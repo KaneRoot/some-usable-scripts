@@ -18,7 +18,7 @@ int main( int argc, char **argv)
 {
 	if(argc < 2) { printf("Usage %s numIPC\n", argv[0]); exit(EXIT_FAILURE); }
 	MEMP *memoireP; 
-	int mutex_data, mutex_tpa, sem_global, i=0;
+	int mutex_data, mutex_tpa, i=0;
 	char c;
     const char CTRL_D = 4 ;
 	int shmid; 
@@ -32,7 +32,6 @@ int main( int argc, char **argv)
     cbreak() ;			/* lecture non bufferisee */
 
 	key_t sem_key_data = MUTEX_DATA;
-	key_t sem_key_glob = MUTEX_GLOB;
 	key_t sem_key_tpa = MUTEX_TPA;
 
 	shmid = shmget(shm_key, sizeof(MEMP), 0766 | IPC_CREAT); 
@@ -42,10 +41,7 @@ int main( int argc, char **argv)
 	if((memoireP = (MEMP *) shmat(shmid, 0 , 0766)) ==(void *) -1)	{ perror("shmat"); exit(EXIT_FAILURE); }
 	if((mutex_data = open_sem( sem_key_data)) == -1)	{ perror("open_sem"); exit(EXIT_FAILURE); }
 	if((mutex_tpa = open_sem( sem_key_tpa)) == -1)		{ perror("open_sem"); exit(EXIT_FAILURE); }
-	if((sem_global = open_sem( sem_key_glob)) == -1)	{ perror("open_sem"); exit(EXIT_FAILURE); }
 
-	// sem_global est un sémaphore à MAX_PROD entrants.
-	//P(sem_global);
 	P(mutex_tpa);
 		for(i = 0; i < MAX_PROD && memoireP->tpa[i] != -1 ; i++);
 		if(memoireP->tpa[i] != -1) { V(mutex_tpa); exit(EXIT_FAILURE); }
@@ -83,9 +79,6 @@ int main( int argc, char **argv)
 	P(mutex_tpa);
 		memoireP->tpa[i] = -1;	
 	V(mutex_tpa);
-
-	// On a fini, on libère l'accès à un autre producteur
-	//V(sem_global);
 
     endwin();
 
