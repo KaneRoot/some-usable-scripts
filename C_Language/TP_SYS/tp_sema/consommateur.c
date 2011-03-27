@@ -38,11 +38,8 @@ int main( int argc, char **argv)
 	MEMP * memoireP;
 	MEMP temp;
 	MSG msgtemp;
-	PROD tprod[MAX_PROD];
+	WINDOW *tWindow[MAX_PROD];
 
-	int NB_FENETRES = 4;
-	WINDOW *f_haut, *f_bas, *f_milieu1, *f_milieu2;
-    //WINDOW **tWindow;
     WINDOW *w ;
     char c ;
 
@@ -84,11 +81,10 @@ int main( int argc, char **argv)
 	// Si != 0 et si nbDeProd = 0 alors on quitte
 	int premier_lancement = 0;
 
-	// Création des fenêtres MARCHE
-    f_haut = creation_fenetre(LINES/NB_FENETRES,0,"F_HAUT") ;
-    f_milieu1 = creation_fenetre(LINES/NB_FENETRES,LINES - 3 * (LINES/NB_FENETRES),"F_MILIEU1") ;
-    f_milieu2 = creation_fenetre(LINES/NB_FENETRES,LINES - 2 * (LINES/NB_FENETRES),"F_MILIEU2") ;
-    f_bas = creation_fenetre(LINES/NB_FENETRES, LINES - (LINES/NB_FENETRES),"F_BAS") ;
+	for( i = 0; i < MAX_PROD; i++)
+	{
+		tWindow[i] = creation_fenetre(LINES / MAX_PROD, i*(LINES/MAX_PROD), "En attente");
+	}
 
     while (1)
     {
@@ -109,28 +105,15 @@ int main( int argc, char **argv)
 
 		P(mutex_data);
 			vartemp = (int) memoireP->tete;
-			msgtemp = (MSG) memoireP->f[vartemp -1 ];
+			msgtemp = (MSG) memoireP->f[(vartemp -1 + MAX_BUF) % MAX_BUF ];
 		V(mutex_data);
 
 		if(numTete != vartemp)
 		{
 			numTete = vartemp;
 			c = msgtemp.c;
+			w = tWindow[msgtemp.idp];
 
-			switch(msgtemp.idp)
-			{
-				case 0 :
-					w = f_haut;
-					break;
-				case 1 :
-					w = f_milieu1;
-					break;
-				case 2 :
-					w = f_milieu2;
-					break;
-				default :
-					w = f_bas;
-			}
 			waddch(w,c) ;
 			wrefresh(w) ; 
 		}
@@ -153,7 +136,9 @@ int main( int argc, char **argv)
 			endwin() ;
 			exit(EXIT_SUCCESS);
 		}
-		usleep(5); // Ralentissement volontaire du programme
+		// Ralentissement volontaire du programme
+		// Pour cause d'utilisation excessive de CPU
+		usleep(2); 
     }
 	exit(EXIT_FAILURE);
 }
