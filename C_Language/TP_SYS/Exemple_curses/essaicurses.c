@@ -72,7 +72,7 @@ main()
 /* creation des cadres et des fenetres de dialogue */
 
     f_haut= creation_fenetre(LINES/2,0,"EMISSION") ;
-    f_bas = creation_fenetre(LINES/2,LINES/2,"RECEPTION") ;
+    f_bas = creation_fenetre(LINES/2, LINES/2 ,"RECEPTION") ;
 
 /* lecture  et affichage des caracteres */
 

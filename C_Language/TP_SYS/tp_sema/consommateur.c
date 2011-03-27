@@ -18,11 +18,12 @@
 #include "sema.h"
 #include "constantes.h"
 
+extern int compteur;
 WINDOW *creation_fenetre(int n,int d,char *t);
 typedef struct prod_s
 {
 	int idp;
-	WINDOW w;
+	WINDOW *w;
 } PROD;
 
 int main( int argc, char **argv)
@@ -41,8 +42,7 @@ int main( int argc, char **argv)
 	PROD tprod[MAX_PROD];
 
 	int NB_FENETRES = 1;
-	WINDOW *f_haut, *f_bas, *f_milieu1, *f_milieu2;
-    //WINDOW **tWindow;
+	WINDOW *f_haut;
     WINDOW *w ;
     char c ;
 
@@ -72,41 +72,79 @@ int main( int argc, char **argv)
 		*memoireP = temp;
 	V(mutex_data);
 		
-	sleep(5);
-	// nbDeProd => est-ce qu'il y a des producteur (si 0 on quitte)
-	int nbDeProd;
-
 	// numTete est un entier qui détermine la "tête" courante. Si elle a changé, c'est qu'on a ajouté un caractère
 	int numTete = 0;
 	int vartemp;
+	int premier_lancement = 0;
 
 	// Création des fenêtres MARCHE
     f_haut = creation_fenetre(LINES/NB_FENETRES,0,"F_HAUT") ;
-    f_milieu1 = creation_fenetre(LINES/NB_FENETRES,LINES - 3 * (LINES/NB_FENETRES),"F_MILIEU1") ;
-    f_milieu2 = creation_fenetre(LINES/NB_FENETRES,LINES - 2 * (LINES/NB_FENETRES),"F_MILIEU2") ;
-    f_bas = creation_fenetre(LINES/NB_FENETRES, LINES - (LINES/NB_FENETRES),"F_BAS") ;
 
     while (1)
     {
-		// On (re)met nbDeProd à 0 
-		nbDeProd = 0;
+		// On (re)met compteur à 0 , compte le nombre de producteurs
+		compteur = 0;
 
 		// On vérifie qu'il y ait toujours des producteurs MARCHE
-		for(i = 0 ; i < MAX_PROD && nbDeProd == 0 ; i++ )
+		for(i = 0 ; i < MAX_PROD && compteur == 0 ; i++ )
 			if(memoireP->tpa[i] != -1)
-				nbDeProd++;
+			{	
+				compteur++;
+				premier_lancement++;
+			}
+		// Utilisation de vartemp pour l'affichage, on utilise le numéro courant de fenêtre
+		vartemp = 0;
+
+		/*
+		P(mutex_tpa);
+			for(int k = 0 ; k < MAX_PROD && compteur != 0 ; k++)
+			{
+				if(memoireP->tpa[k] != -1)
+				{
+					tprod[k].idp = k;
+					if(tprod[k].w != NULL)
+					{ 
+						delwin(tprod[k].w); 
+						tprod[k].w = NULL;
+					}
+					tprod[k].w = creation_fenetre(LINES/compteur, (LINES * vartemp)/compteur,"PROD");
+					vartemp++;
+				}
+				else
+				{
+					if(tprod[k].w != NULL)
+					{
+						delwin(tprod[k].w);
+						tprod[k].idp = -1;
+						tprod[k].w = NULL;
+					}
+				}
+
+				if(premier_lancement != 0)
+				{
+					delwin(f_haut);
+				}
+			}
+		V(mutex_tpa);
+		*/
 
 		P(mutex_data);
 			vartemp = (int) memoireP->tete;
-			msgtemp = (MSG) memoireP->f[vartemp -1 ];
+			msgtemp = (MSG) memoireP->f[((vartemp -1)+ MAX_BUF) % MAX_BUF];
 		V(mutex_data);
 
 		if(numTete != vartemp)
 		{
 			numTete = vartemp;
 			c = msgtemp.c;
-			//w =  tprod[msgtemp.idp].w;
-			w = f_haut;
+			if(premier_lancement == 0)
+			{
+				w = f_haut;
+			}
+			else
+			{
+				w = tprod[msgtemp.idp].w;
+			}
 
 			waddch(w,c) ;
 			wrefresh(w) ; 
@@ -119,7 +157,7 @@ int main( int argc, char **argv)
 		V(mutex_data);
 
 		// S'il n'y a plus de producteurs, on quitte
-		if(nbDeProd == 0)
+		if(compteur == 0)
 		{
 			if(shmctl(shmid, IPC_RMID, 0) < 0)
 			{ perror("shmctl"); exit(EXIT_FAILURE); }
@@ -130,7 +168,7 @@ int main( int argc, char **argv)
 			endwin() ;
 			exit(EXIT_SUCCESS);
 		}
-		usleep(10); // Ralentissement volontaire du programme
+		usleep(5); // Ralentissement volontaire du programme
     }
 	exit(EXIT_FAILURE);
 }
