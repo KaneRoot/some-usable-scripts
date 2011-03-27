@@ -40,7 +40,7 @@ int main( int argc, char **argv)
 	MSG msgtemp;
 	PROD tprod[MAX_PROD];
 
-	int NB_FENETRES = 1;
+	int NB_FENETRES = 4;
 	WINDOW *f_haut, *f_bas, *f_milieu1, *f_milieu2;
     //WINDOW **tWindow;
     WINDOW *w ;
@@ -116,8 +116,21 @@ int main( int argc, char **argv)
 		{
 			numTete = vartemp;
 			c = msgtemp.c;
-			w = f_haut;
 
+			switch(msgtemp.idp)
+			{
+				case 0 :
+					w = f_haut;
+					break;
+				case 1 :
+					w = f_milieu1;
+					break;
+				case 2 :
+					w = f_milieu2;
+					break;
+				default :
+					w = f_bas;
+			}
 			waddch(w,c) ;
 			wrefresh(w) ; 
 		}
