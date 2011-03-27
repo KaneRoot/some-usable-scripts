@@ -27,10 +27,6 @@ int main( int argc, char **argv)
 
     WINDOW * fenetre ;
 
-    initscr() ;			/* initialisation (obligatoire) de curses */
-    noecho() ;			/* suppression de l'echo des caracteres tapes*/
-    cbreak() ;			/* lecture non bufferisee */
-
 	key_t sem_key_data = MUTEX_DATA;
 	key_t sem_key_tpa = MUTEX_TPA;
 
@@ -47,6 +43,10 @@ int main( int argc, char **argv)
 		if(memoireP->tpa[i] != -1) { V(mutex_tpa); exit(EXIT_FAILURE); }
 		memoireP->tpa[i] = 0;
 	V(mutex_tpa);
+
+    initscr() ;			/* initialisation (obligatoire) de curses */
+    noecho() ;			/* suppression de l'echo des caracteres tapes*/
+    cbreak() ;			/* lecture non bufferisee */
 
 
 	// Je donne un nom à ma fenêtre
