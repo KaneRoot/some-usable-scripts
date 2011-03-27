@@ -72,13 +72,17 @@ int main( int argc, char **argv)
 		*memoireP = temp;
 	V(mutex_data);
 		
-	sleep(5);
 	// nbDeProd => est-ce qu'il y a des producteur (si 0 on quitte)
 	int nbDeProd;
 
 	// numTete est un entier qui détermine la "tête" courante. Si elle a changé, c'est qu'on a ajouté un caractère
 	int numTete = 0;
 	int vartemp;
+
+	// Variable temporaire qui indique le premier lancement du consommateur.c
+	// Si = 0 alors aucun producteur ne s'est connecté, on ne quitte pas le programme
+	// Si != 0 et si nbDeProd = 0 alors on quitte
+	int premier_lancement = 0;
 
 	// Création des fenêtres MARCHE
     f_haut = creation_fenetre(LINES/NB_FENETRES,0,"F_HAUT") ;
@@ -91,10 +95,17 @@ int main( int argc, char **argv)
 		// On (re)met nbDeProd à 0 
 		nbDeProd = 0;
 
-		// On vérifie qu'il y ait toujours des producteurs MARCHE
+		// On vérifie qu'il y ait toujours des producteurs
+		P(mutex_tpa);
 		for(i = 0 ; i < MAX_PROD && nbDeProd == 0 ; i++ )
+		{
 			if(memoireP->tpa[i] != -1)
+			{
 				nbDeProd++;
+				premier_lancement++;
+			}
+		}
+		V(mutex_tpa);
 
 		P(mutex_data);
 			vartemp = (int) memoireP->tete;
@@ -105,7 +116,6 @@ int main( int argc, char **argv)
 		{
 			numTete = vartemp;
 			c = msgtemp.c;
-			//w =  tprod[msgtemp.idp].w;
 			w = f_haut;
 
 			waddch(w,c) ;
@@ -119,7 +129,7 @@ int main( int argc, char **argv)
 		V(mutex_data);
 
 		// S'il n'y a plus de producteurs, on quitte
-		if(nbDeProd == 0)
+		if(nbDeProd == 0 && premier_lancement != 0)
 		{
 			if(shmctl(shmid, IPC_RMID, 0) < 0)
 			{ perror("shmctl"); exit(EXIT_FAILURE); }
@@ -130,7 +140,7 @@ int main( int argc, char **argv)
 			endwin() ;
 			exit(EXIT_SUCCESS);
 		}
-		usleep(10); // Ralentissement volontaire du programme
+		usleep(5); // Ralentissement volontaire du programme
     }
 	exit(EXIT_FAILURE);
 }
