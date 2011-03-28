@@ -34,7 +34,11 @@ key_t sem_key_tpa = MUTEX_TPA;
 
 int main( int argc, char **argv)
 {
-	if(argc < 2) { printf("Usage : %s nSHM \n", argv[0]); exit(EXIT_FAILURE); }
+	if(argc < 2) 
+	{ 
+		printf("Usage : %s nSHM \n", argv[0]); 
+		exit(EXIT_FAILURE); 
+	}
 
 	shm_key = (key_t) atoi(argv[1]);
 	MEMP * memoireP;
