@@ -42,7 +42,11 @@ int main( int argc, char **argv)
 	shmid = shmget(shm_key, sizeof(MEMP), 0766 | IPC_CREAT); 
 
 
-	if (shmid == -1) { perror("shmget"); exit(EXIT_FAILURE); }
+	if (shmid == -1) 
+	{ 
+		perror("shmget"); 
+		exit(EXIT_FAILURE); 
+	}
 
 	if((memoireP = (MEMP *) shmat(shmid, 0 , 0766)) ==(void *) -1)	
 	{ 
@@ -66,7 +70,7 @@ int main( int argc, char **argv)
 		if(memoireP->tpa[i] != -1) 
 		{ 
 			V(mutex_tpa); 
-			printf("Plus de place dispo dans les producteurs"); 
+			printf("Plus de place dispo dans les producteurs\n"); 
 			exit(EXIT_FAILURE); 
 		}
 		memoireP->tpa[i] = 0;
