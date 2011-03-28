@@ -11,6 +11,7 @@
 #include <sys/sem.h>
 #include <sys/shm.h>
 
+#include <signal.h>
 #include <curses.h>
 #include <ctype.h>
 #include "consommateur.h"
@@ -18,6 +19,7 @@
 #include "sema.h"
 #include "constantes.h"
 
+void quitter(int signal);
 WINDOW *creation_fenetre(int n,int d,char *t);
 typedef struct prod_s
 {
@@ -25,14 +27,14 @@ typedef struct prod_s
 	WINDOW w;
 } PROD;
 
+int shmid, shm_key, i = 0;
+int mutex_data, mutex_tpa;
+key_t sem_key_data = MUTEX_DATA;
+key_t sem_key_tpa = MUTEX_TPA;
+
 int main( int argc, char **argv)
 {
 	if(argc < 2) { printf("Usage : %s nSHM \n", argv[0]); exit(EXIT_FAILURE); }
-
-	int shmid, shm_key, i = 0;
-	int mutex_data, mutex_tpa;
-	key_t sem_key_data = MUTEX_DATA;
-	key_t sem_key_tpa = MUTEX_TPA;
 
 	shm_key = (key_t) atoi(argv[1]);
 	MEMP * memoireP;
@@ -42,6 +44,10 @@ int main( int argc, char **argv)
 
     WINDOW *w ;
     char c ;
+
+	signal(SIGHUP, quitter);
+	signal(SIGINT, quitter);
+	signal(SIGQUIT, quitter);
 
     initscr() ;			/* initialisation (obligatoire) de curses */
     noecho() ;			/* suppression de l'echo des caracteres tapes*/
@@ -163,4 +169,17 @@ WINDOW *creation_fenetre(int n,int d,char *t)
     wclear(w) ;
     wrefresh(w) ;
     return w ;
+}
+
+void quitter(int signal)
+{
+	if(shmctl(shmid, IPC_RMID, 0) < 0)
+	{ perror("shmctl"); exit(EXIT_FAILURE); }
+		
+	if(mutex_data >= 0) { del_sem(sem_key_data); }
+	if(mutex_tpa >= 0) { del_sem(sem_key_tpa); }
+
+	endwin() ;
+	printf("FIN.\n");
+	exit(EXIT_SUCCESS);
 }
