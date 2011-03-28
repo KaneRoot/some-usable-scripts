@@ -1,0 +1,12 @@
+RAPPORT S4 producteur / consommateur
+
+Faire marcher le programme :
+	make
+	./consommateur num
+	./producteur num
+	[./producteur num]
+
+Le consommateur peut se terminer avec un CTRL_C.
+Idem pour le producteur.
+
+

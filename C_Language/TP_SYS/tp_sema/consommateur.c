@@ -133,14 +133,7 @@ int main( int argc, char **argv)
 		// S'il n'y a plus de producteurs, on quitte
 		if(nbDeProd == 0 && premier_lancement != 0)
 		{
-			if(shmctl(shmid, IPC_RMID, 0) < 0)
-			{ perror("shmctl"); exit(EXIT_FAILURE); }
-		
-			if(mutex_data >= 0) { del_sem(sem_key_data); }
-			if(mutex_tpa >= 0) { del_sem(sem_key_tpa); }
-
-			endwin() ;
-			exit(EXIT_SUCCESS);
+			quitter(0);
 		}
 		// Ralentissement volontaire du programme
 		// Pour cause d'utilisation excessive de CPU
