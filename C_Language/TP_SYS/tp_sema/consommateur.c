@@ -133,7 +133,7 @@ int main( int argc, char **argv)
 		// S'il n'y a plus de producteurs, on quitte
 		if(nbDeProd == 0 && premier_lancement != 0)
 		{
-			quitter(0);
+			quitter(PLUSDEPROD);
 		}
 		// Ralentissement volontaire du programme
 		// Pour cause d'utilisation excessive de CPU
@@ -173,6 +173,8 @@ void quitter(int signal)
 	if(mutex_tpa >= 0) { del_sem(sem_key_tpa); }
 
 	endwin() ;
+	if(signal == PLUSDEPROD)
+		printf("Plus de producteurs.\n");
 	printf("FIN.\n");
 	exit(EXIT_SUCCESS);
 }

@@ -7,23 +7,26 @@
 #include <sys/shm.h>
 #include <curses.h>
 #include <ctype.h>
+#include <signal.h>
 #include "constantes.h"
 #include "types.h"
 #include "sema.h"
 
 #define NAMESIZE 30
 
+char * nom_de_la_fenetre = NULL;
+int mutex_data, mutex_tpa, i=0;
+MEMP *memoireP; 
+
+void quitter(int signal);
 WINDOW *creation_fenetre(int n,int d,char *t);
 int main( int argc, char **argv)
 {
 	if(argc < 2) { printf("Usage %s numIPC\n", argv[0]); exit(EXIT_FAILURE); }
-	MEMP *memoireP; 
-	int mutex_data, mutex_tpa, i=0;
 	char c;
     const char CTRL_D = 4 ;
 	int shmid; 
 	int shm_key = atoi(argv[1]);
-	char * nom_de_la_fenetre = NULL;
 
     WINDOW * fenetre ;
 
@@ -31,6 +34,12 @@ int main( int argc, char **argv)
 	key_t sem_key_tpa = MUTEX_TPA;
 
 	shmid = shmget(shm_key, sizeof(MEMP), 0766 | IPC_CREAT); 
+
+
+	// On quitte si on reçoit ces signaux
+	signal(SIGHUP, quitter);
+	signal(SIGINT, quitter);
+	signal(SIGQUIT, quitter);
 
 	if (shmid == -1) { perror("shmget"); exit(EXIT_FAILURE); }
 
@@ -63,30 +72,14 @@ int main( int argc, char **argv)
 			{
 				memoireP->f[memoireP->tete].c = c;
 				memoireP->f[memoireP->tete].idp = i;
-				//temp.c = (char) c;
-				//temp.idp = i;
-				//tete = (int) memoireP->tete;
-				//memoireP->f[tete] = (MSG) temp;
-				//tete++;
-				memoireP->tete++;// = (int) tete;
+				memoireP->tete++;
 			}
 		V(mutex_data);
 
         waddch(fenetre,c) ;
         wrefresh(fenetre) ; 
 	}
-	// On a fini, on remet la valeur de l'indice du processus à -1 dans le tableau des producteurs
-	P(mutex_tpa);
-		memoireP->tpa[i] = -1;	
-	V(mutex_tpa);
-
-    endwin();
-
-	// On libère la mémoire de façon propre
-	free(nom_de_la_fenetre);
-
-	exit(EXIT_SUCCESS); 
-
+	quitter(0);
 }
 
 WINDOW *creation_fenetre(int n,int d,char *t)
@@ -109,4 +102,21 @@ WINDOW *creation_fenetre(int n,int d,char *t)
     wclear(w) ;
     wrefresh(w) ;
     return w ;
+}
+
+void quitter(int signal)
+{
+
+    endwin();
+	// On remet la valeur de l'indice du processus à -1 
+	// dans le tableau des producteurs
+	P(mutex_tpa);
+		memoireP->tpa[i] = -1;	
+	V(mutex_tpa);
+
+	// On libère la mémoire de façon propre
+	free(nom_de_la_fenetre);
+
+	exit(EXIT_SUCCESS); 
+
 }
