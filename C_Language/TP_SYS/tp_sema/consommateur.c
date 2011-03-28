@@ -122,7 +122,7 @@ int main( int argc, char **argv)
 
 		P(mutex_data);
 			vartemp = (int) memoireP->tete;
-			msgtemp = (MSG) memoireP->f[(vartemp -1 + MAX_BUF) % MAX_BUF ];
+			msgtemp = (MSG) memoireP->f[( vartemp -1 + MAX_BUF) % MAX_BUF ];
 		V(mutex_data);
 
 		if(numTete != vartemp)
@@ -136,9 +136,7 @@ int main( int argc, char **argv)
 		}
 
 		P(mutex_data);
-			vartemp = (int) memoireP->queue;
-			vartemp = (vartemp +1) % MAX_BUF;
-			memoireP->queue = vartemp;
+			memoireP->queue = (memoireP->tete -1 + MAX_BUF) % MAX_BUF;
 		V(mutex_data);
 
 		// S'il n'y a plus de producteurs, on quitte
@@ -178,10 +176,19 @@ WINDOW *creation_fenetre(int n,int d,char *t)
 void quitter(int signal)
 {
 	if(shmctl(shmid, IPC_RMID, 0) < 0)
-	{ perror("shmctl"); exit(EXIT_FAILURE); }
+	{ 
+		perror("shmctl"); 
+		exit(EXIT_FAILURE); 
+	}
 		
-	if(mutex_data >= 0) { del_sem(sem_key_data); }
-	if(mutex_tpa >= 0) { del_sem(sem_key_tpa); }
+	if(mutex_data >= 0) 
+	{ 
+		del_sem(sem_key_data); 
+	}
+	if(mutex_tpa >= 0) 
+	{ 
+		del_sem(sem_key_tpa); 
+	}
 
 	endwin() ;
 	if(signal == PLUSDEPROD)
