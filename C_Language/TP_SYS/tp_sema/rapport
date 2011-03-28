@@ -7,6 +7,6 @@ Faire marcher le programme :
 	[./producteur num]
 
 Le consommateur peut se terminer avec un CTRL_C.
-Idem pour le producteur.
+Idem pour le producteur, qui peut également quitter avec un CTRL_D.
 
-
+Le consommateur est programmé pour quitter si tous les producteurs partent.
