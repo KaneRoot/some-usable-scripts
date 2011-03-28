@@ -49,7 +49,13 @@ int main( int argc, char **argv)
 
 	P(mutex_tpa);
 		for(i = 0; i < MAX_PROD && memoireP->tpa[i] != -1 ; i++);
-		if(memoireP->tpa[i] != -1) { V(mutex_tpa); exit(EXIT_FAILURE); }
+		// Si on n'a plus de place dans le TPA (tous pris) alors on quitte
+		if(memoireP->tpa[i] != -1) 
+		{ 
+			V(mutex_tpa); 
+			printf("Plus de place dispo dans les producteurs"); 
+			exit(EXIT_FAILURE); 
+		}
 		memoireP->tpa[i] = 0;
 	V(mutex_tpa);
 
@@ -68,7 +74,7 @@ int main( int argc, char **argv)
 	{
 
 		P(mutex_data);
-			if(((memoireP->queue -1) % MAX_BUF) != (memoireP->tete % MAX_BUF) )
+			if(((memoireP->queue -1 + MAX_BUF) % MAX_BUF) != (memoireP->tete % MAX_BUF) )
 			{
 				memoireP->f[memoireP->tete].c = c;
 				memoireP->f[memoireP->tete].idp = i;

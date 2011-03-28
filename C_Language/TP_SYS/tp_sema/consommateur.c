@@ -49,21 +49,28 @@ int main( int argc, char **argv)
 	signal(SIGINT, quitter);
 	signal(SIGQUIT, quitter);
 
-    initscr() ;			/* initialisation (obligatoire) de curses */
-    noecho() ;			/* suppression de l'echo des caracteres tapes*/
-    cbreak() ;			/* lecture non bufferisee */
-
 	if((shmid = shmget(shm_key, sizeof(MEMP), IPC_CREAT|IPC_EXCL|0766)) == -1) 
-	{ perror("shmget"); exit(EXIT_FAILURE);}
+	{ 
+		perror("shmget"); 
+		exit(EXIT_FAILURE);
+	}
 	
 	if((memoireP = (MEMP *) shmat(shmid, 0 , 0766)) == (void *) -1)
-	{ perror("shmat"); exit(EXIT_FAILURE); }
+	{ 
+		perror("shmat"); 
+		exit(EXIT_FAILURE); 
+	}
 		
 	if((mutex_data = creat_sem( sem_key_data, 1)) == -1)
-	{ perror("creat_sem"); exit(EXIT_FAILURE); }
+	{ 
+		perror("creat_sem"); exit(EXIT_FAILURE); 
+	}
 
 	if((mutex_tpa = creat_sem( sem_key_tpa, 1)) == -1)
-	{ perror("creat_sem"); exit(EXIT_FAILURE); }
+	{ 
+		perror("creat_sem"); 
+		exit(EXIT_FAILURE); 
+	}
 
 	temp.tete = 0;
 	temp.queue = 0;
@@ -86,6 +93,10 @@ int main( int argc, char **argv)
 	// Si = 0 alors aucun producteur ne s'est connecté, on ne quitte pas le programme
 	// Si != 0 et si nbDeProd = 0 alors on quitte
 	int premier_lancement = 0;
+
+    initscr() ;			/* initialisation (obligatoire) de curses */
+    noecho() ;			/* suppression de l'echo des caracteres tapes*/
+    cbreak() ;			/* lecture non bufferisee */
 
 	for( i = 0; i < MAX_PROD; i++)
 	{
