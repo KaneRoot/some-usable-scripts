@@ -76,9 +76,9 @@ int main( int argc, char **argv)
 		P(mutex_data);
 			if(((memoireP->queue -1 + MAX_BUF) % MAX_BUF) != (memoireP->tete % MAX_BUF) )
 			{
-				memoireP->f[memoireP->tete].c = c;
-				memoireP->f[memoireP->tete].idp = i;
-				memoireP->tete++;
+				memoireP->f[(memoireP->tete + MAX_BUF) % MAX_BUF].c = c;
+				memoireP->f[(memoireP->tete + MAX_BUF) % MAX_BUF].idp = i;
+				memoireP->tete = (memoireP->tete + 1 + MAX_BUF) % MAX_BUF;
 			}
 		V(mutex_data);
 
