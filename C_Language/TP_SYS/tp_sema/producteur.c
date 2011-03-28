@@ -22,13 +22,19 @@ void quitter(int signal);
 WINDOW *creation_fenetre(int n,int d,char *t);
 int main( int argc, char **argv)
 {
+	// On ne rentre pas de numéro => on quitte en disant comment utiliser le programme
 	if(argc < 2) { printf("Usage %s numIPC\n", argv[0]); exit(EXIT_FAILURE); }
 	char c;
     const char CTRL_D = 4 ;
 	int shmid; 
-	int shm_key = atoi(argv[1]);
 
-    WINDOW * fenetre ;
+	// On quitte si on reçoit ces signaux
+	signal(SIGHUP, quitter);
+	signal(SIGINT, quitter);
+	signal(SIGQUIT, quitter);
+
+	// Récupération du numéro d'IPC
+	int shm_key = atoi(argv[1]);
 
 	key_t sem_key_data = MUTEX_DATA;
 	key_t sem_key_tpa = MUTEX_TPA;
@@ -36,16 +42,23 @@ int main( int argc, char **argv)
 	shmid = shmget(shm_key, sizeof(MEMP), 0766 | IPC_CREAT); 
 
 
-	// On quitte si on reçoit ces signaux
-	signal(SIGHUP, quitter);
-	signal(SIGINT, quitter);
-	signal(SIGQUIT, quitter);
-
 	if (shmid == -1) { perror("shmget"); exit(EXIT_FAILURE); }
 
-	if((memoireP = (MEMP *) shmat(shmid, 0 , 0766)) ==(void *) -1)	{ perror("shmat"); exit(EXIT_FAILURE); }
-	if((mutex_data = open_sem( sem_key_data)) == -1)	{ perror("open_sem"); exit(EXIT_FAILURE); }
-	if((mutex_tpa = open_sem( sem_key_tpa)) == -1)		{ perror("open_sem"); exit(EXIT_FAILURE); }
+	if((memoireP = (MEMP *) shmat(shmid, 0 , 0766)) ==(void *) -1)	
+	{ 
+		perror("shmat"); 
+		exit(EXIT_FAILURE); 
+	}
+	if((mutex_data = open_sem( sem_key_data)) == -1)	
+	{ 
+		perror("open_sem"); 
+		exit(EXIT_FAILURE); 
+	}
+	if((mutex_tpa = open_sem( sem_key_tpa)) == -1)		
+	{ 
+		perror("open_sem"); 
+		exit(EXIT_FAILURE); 
+	}
 
 	P(mutex_tpa);
 		for(i = 0; i < MAX_PROD && memoireP->tpa[i] != -1 ; i++);
@@ -58,6 +71,9 @@ int main( int argc, char **argv)
 		}
 		memoireP->tpa[i] = 0;
 	V(mutex_tpa);
+
+	// Initialisation de la fenêtre
+    WINDOW * fenetre ;
 
     initscr() ;			/* initialisation (obligatoire) de curses */
     noecho() ;			/* suppression de l'echo des caracteres tapes*/

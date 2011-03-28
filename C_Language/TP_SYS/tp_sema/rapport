@@ -11,4 +11,3 @@ Idem pour le producteur, qui peut également quitter avec un CTRL_D.
 
 Le consommateur est programmé pour quitter si les producteurs actifs partent.
 
-
