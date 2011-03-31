@@ -14,6 +14,8 @@
 
 #define NAMESIZE 30
 
+// nom_de_la_fenetre variable globale car je la free 
+// dans "quitter()"
 char * nom_de_la_fenetre = NULL;
 int mutex_data, mutex_tpa, i=0;
 MEMP *memoireP; 
