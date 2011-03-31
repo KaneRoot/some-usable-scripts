@@ -1,39 +1,36 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
-#include <sys/types.h>
-#include <sys/ipc.h>
 #include <assert.h>
 #include <unistd.h>
 #include <fcntl.h>
 #include <stdarg.h>
 #include <errno.h>
-#include <sys/sem.h>
-#include <sys/shm.h>
-
 #include <signal.h>
 #include <curses.h>
 #include <ctype.h>
+
+#include <sys/sem.h>
+#include <sys/shm.h>
+#include <sys/types.h>
+#include <sys/ipc.h>
+
 #include "consommateur.h"
 #include "types.h"
 #include "sema.h"
 #include "constantes.h"
 
-void quitter(int signal);
-WINDOW *creation_fenetre(int n,int d,char *t);
-typedef struct prod_s
-{
-	int idp;
-	WINDOW w;
-} PROD;
 
-int shmid, shm_key, i = 0;
+// Déclaration en global de certaines variables
+// Utilisées par plusieurs fonctions du programme
+int shmid, shm_key;
 int mutex_data, mutex_tpa;
-key_t sem_key_data = MUTEX_DATA;
-key_t sem_key_tpa = MUTEX_TPA;
 
 int main( int argc, char **argv)
 {
+	int i = 0;
+	// Si on n'indique pas le numéro d'IPC
+	// On quitte le programme
 	if(argc < 2) 
 	{ 
 		printf("Usage : %s nSHM \n", argv[0]); 
@@ -65,12 +62,12 @@ int main( int argc, char **argv)
 		exit(EXIT_FAILURE); 
 	}
 		
-	if((mutex_data = creat_sem( sem_key_data, 1)) == -1)
+	if((mutex_data = creat_sem( MUTEX_DATA, 1)) == -1)
 	{ 
 		perror("creat_sem"); exit(EXIT_FAILURE); 
 	}
 
-	if((mutex_tpa = creat_sem( sem_key_tpa, 1)) == -1)
+	if((mutex_tpa = creat_sem( MUTEX_TPA, 1)) == -1)
 	{ 
 		perror("creat_sem"); 
 		exit(EXIT_FAILURE); 
@@ -102,6 +99,7 @@ int main( int argc, char **argv)
     noecho() ;			/* suppression de l'echo des caracteres tapes*/
     cbreak() ;			/* lecture non bufferisee */
 
+	// Création des fenêtres statiquement
 	for( i = 0; i < MAX_PROD; i++)
 	{
 		tWindow[i] = creation_fenetre(LINES / MAX_PROD, i*(LINES/MAX_PROD), "En attente");
@@ -119,16 +117,23 @@ int main( int argc, char **argv)
 			if(memoireP->tpa[i] != -1)
 			{
 				nbDeProd++;
-				premier_lancement++;
+
+				// On change la valeur de la variable
+				// un producteur au moins s'est déjà connecté
+				premier_lancement = 1; 
 			}
 		}
 		V(mutex_tpa);
 
+		// On récupère la tête courante
+		// Et le message courant
 		P(mutex_data);
 			vartemp = (int) memoireP->tete;
 			msgtemp = (MSG) memoireP->f[( vartemp -1 + MAX_BUF) % MAX_BUF ];
 		V(mutex_data);
 
+		// Si le numéro de tête a changé
+		// Alors on a écrit un message
 		if(numTete != vartemp)
 		{
 			numTete = vartemp;
@@ -139,6 +144,7 @@ int main( int argc, char **argv)
 			wrefresh(w) ; 
 		}
 
+		// On incrémente la queue
 		P(mutex_data);
 			memoireP->queue = (memoireP->tete -1 + MAX_BUF) % MAX_BUF;
 		V(mutex_data);
@@ -152,6 +158,7 @@ int main( int argc, char **argv)
 		// Pour cause d'utilisation excessive de CPU
 		usleep(2); 
     }
+	// le programme n'est pas supposé pouvoir sortir de la boucle
 	exit(EXIT_FAILURE);
 }
 
@@ -179,24 +186,30 @@ WINDOW *creation_fenetre(int n,int d,char *t)
 
 void quitter(int signal)
 {
+	// Fermeture de la fenêtre
+	endwin() ;
+
+	// Suppression de la mémoire partagée
 	if(shmctl(shmid, IPC_RMID, 0) < 0)
 	{ 
 		perror("shmctl"); 
 		exit(EXIT_FAILURE); 
 	}
-		
+
+	// Suppression des sémaphores
 	if(mutex_data >= 0) 
 	{ 
-		del_sem(sem_key_data); 
+		del_sem(MUTEX_DATA); 
 	}
 	if(mutex_tpa >= 0) 
 	{ 
-		del_sem(sem_key_tpa); 
+		del_sem(MUTEX_TPA); 
 	}
 
-	endwin() ;
+	// Si on quitte avec le signal PLUSDEPROD on l'indique
 	if(signal == PLUSDEPROD)
 		printf("Plus de producteurs.\n");
+
 	printf("FIN.\n");
 	exit(EXIT_SUCCESS);
 }
