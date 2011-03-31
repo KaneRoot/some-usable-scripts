@@ -15,8 +15,9 @@
 #define NAMESIZE 30
 
 char * nom_de_la_fenetre = NULL;
-int mutex_data, mutex_tpa, i=0;
-int mutex_nvide,mutex_nplein;
+int i = 0;
+int mutex_data, mutex_tpa;
+int nvide,nplein;
 MEMP *memoireP; 
 
 void quitter(int signal);
@@ -62,13 +63,13 @@ int main( int argc, char **argv)
 		exit(EXIT_FAILURE); 
 	}
 
-	if((mutex_nplein = open_sem( shm_key + NPLEIN)) == -1)	
+	if((nplein = open_sem( shm_key + NPLEIN)) == -1)	
 	{ 
 		perror("open_sem"); 
 		exit(EXIT_FAILURE); 
 	}
 
-	if((mutex_nvide = open_sem( shm_key + NVIDE)) == -1)	
+	if((nvide = open_sem( shm_key + NVIDE)) == -1)	
 	{ 
 		perror("open_sem"); 
 		exit(EXIT_FAILURE); 
@@ -101,7 +102,7 @@ int main( int argc, char **argv)
 	// On quitte le producteur en tappant CTRL_D
     while (( c = wgetch(fenetre)) != CTRL_D)
 	{
-		P(mutex_nvide);
+		P(nvide);
 
 		P(mutex_data);
 			if(((memoireP->queue -1 + MAX_BUF) % MAX_BUF) != (memoireP->tete % MAX_BUF) )
@@ -112,7 +113,7 @@ int main( int argc, char **argv)
 			}
 		V(mutex_data);
 
-		V(mutex_nplein);
+		V(nplein);
         waddch(fenetre,c) ;
         wrefresh(fenetre) ; 
 	}
