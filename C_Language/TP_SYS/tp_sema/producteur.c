@@ -39,7 +39,7 @@ int main( int argc, char **argv)
 	key_t sem_key_data = MUTEX_DATA;
 	key_t sem_key_tpa = MUTEX_TPA;
 
-	shmid = shmget(shm_key, sizeof(MEMP), 0766 | IPC_CREAT); 
+	shmid = shmget(shm_key, sizeof(MEMP), 0766); 
 
 
 	if (shmid == -1) 
