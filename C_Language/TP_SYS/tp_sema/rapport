@@ -13,12 +13,12 @@ Idem pour le producteur, qui peut également quitter avec un CTRL_D.
 Le consommateur est programmé pour quitter si les producteurs actifs partent.
 
 Ce que le consommateur fait :
-Il initialise la mémoire partagée et les sémaphores.
+Il initialise la mémoire partagée et les 4 sémaphores.
 Il affiche ensuite MAX_PROD fenêtres à l'écran.
 Ensuite on attend les producteurs.
 
 Ce que le producteur fait :
 Il recherche dans la mémoire partagée un emplacement libre (non = -1).
-S'il trouve : il s'y place et change la valeur de la variable.
+S'il trouve : il s'y place et change la valeur de la variable à 0.
 Il affiche alors un écran dans lequel l'utilisateur peut écrire, et ce sera affiché dans la case correspondante dans le consommateur.
 
