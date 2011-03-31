@@ -74,6 +74,7 @@ int main( int argc, char **argv)
 		exit(EXIT_FAILURE); 
 	}
 	P(mutex_tpa);
+		// boucle pour savoir s'il reste de la place
 		for(i = 0; i < MAX_PROD && memoireP->tpa[i] != -1 ; i++);
 		// Si on n'a plus de place dans le TPA (tous pris) alors on quitte
 		if(memoireP->tpa[i] != -1) 
