@@ -92,7 +92,6 @@ int main( int argc, char **argv)
     noecho() ;			/* suppression de l'echo des caracteres tapes*/
     cbreak() ;			/* lecture non bufferisee */
 
-
 	// Je donne un nom à ma fenêtre
 	nom_de_la_fenetre = (char *) malloc(sizeof(char *) * NAMESIZE);
 	snprintf(nom_de_la_fenetre, NAMESIZE, "PRODUCTEUR %d", i);
