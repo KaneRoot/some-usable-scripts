@@ -90,6 +90,7 @@ int main( int argc, char **argv)
 	for( i = 0; i < MAX_PROD ; i++)
 		temp.tpa[i] = -1;
 
+	// On initialise la mémoire à temp
 	P(mutex_data);
 		*memoireP = temp;
 	V(mutex_data);
@@ -153,6 +154,7 @@ int main( int argc, char **argv)
 			c = msgtemp.c;
 			w = tWindow[msgtemp.idp];
 
+			// Ensuite rafraichissement de la fenêtre
 			waddch(w,c) ;
 			wrefresh(w) ; 
 		}
