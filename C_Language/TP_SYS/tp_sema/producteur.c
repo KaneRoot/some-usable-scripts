@@ -16,6 +16,7 @@
 
 char * nom_de_la_fenetre = NULL;
 int mutex_data, mutex_tpa, i=0;
+int mutex_nvide,mutex_nplein;
 MEMP *memoireP; 
 
 void quitter(int signal);
@@ -36,9 +37,6 @@ int main( int argc, char **argv)
 	// Récupération du numéro d'IPC
 	int shm_key = atoi(argv[1]);
 
-	key_t sem_key_data = MUTEX_DATA;
-	key_t sem_key_tpa = MUTEX_TPA;
-
 	shmid = shmget(shm_key, sizeof(MEMP), 0766 | IPC_CREAT); 
 
 
@@ -53,17 +51,28 @@ int main( int argc, char **argv)
 		perror("shmat"); 
 		exit(EXIT_FAILURE); 
 	}
-	if((mutex_data = open_sem( sem_key_data)) == -1)	
+	if((mutex_data = open_sem( shm_key + MUTEX_DATA)) == -1)	
 	{ 
 		perror("open_sem"); 
 		exit(EXIT_FAILURE); 
 	}
-	if((mutex_tpa = open_sem( sem_key_tpa)) == -1)		
+	if((mutex_tpa = open_sem( shm_key + MUTEX_TPA)) == -1)		
 	{ 
 		perror("open_sem"); 
 		exit(EXIT_FAILURE); 
 	}
 
+	if((mutex_nplein = open_sem( shm_key + NPLEIN)) == -1)	
+	{ 
+		perror("open_sem"); 
+		exit(EXIT_FAILURE); 
+	}
+
+	if((mutex_nvide = open_sem( shm_key + NVIDE)) == -1)	
+	{ 
+		perror("open_sem"); 
+		exit(EXIT_FAILURE); 
+	}
 	P(mutex_tpa);
 		for(i = 0; i < MAX_PROD && memoireP->tpa[i] != -1 ; i++);
 		// Si on n'a plus de place dans le TPA (tous pris) alors on quitte
@@ -92,6 +101,7 @@ int main( int argc, char **argv)
 	// On quitte le producteur en tappant CTRL_D
     while (( c = wgetch(fenetre)) != CTRL_D)
 	{
+		P(mutex_nvide);
 
 		P(mutex_data);
 			if(((memoireP->queue -1 + MAX_BUF) % MAX_BUF) != (memoireP->tete % MAX_BUF) )
@@ -102,6 +112,7 @@ int main( int argc, char **argv)
 			}
 		V(mutex_data);
 
+		V(mutex_nplein);
         waddch(fenetre,c) ;
         wrefresh(fenetre) ; 
 	}

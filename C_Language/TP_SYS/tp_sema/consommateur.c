@@ -24,7 +24,7 @@
 // Déclaration en global de certaines variables
 // Utilisées par plusieurs fonctions du programme
 int shmid, shm_key;
-int mutex_data, mutex_tpa;
+int mutex_data, mutex_tpa, mutex_nplein, mutex_nvide;
 
 int main( int argc, char **argv)
 {
@@ -62,17 +62,28 @@ int main( int argc, char **argv)
 		exit(EXIT_FAILURE); 
 	}
 		
-	if((mutex_data = creat_sem( MUTEX_DATA, 1)) == -1)
+	if((mutex_data = creat_sem( shm_key + MUTEX_DATA, 1)) == -1)
 	{ 
 		perror("creat_sem"); exit(EXIT_FAILURE); 
 	}
 
-	if((mutex_tpa = creat_sem( MUTEX_TPA, 1)) == -1)
+	if((mutex_tpa = creat_sem( shm_key + MUTEX_TPA, 1)) == -1)
 	{ 
 		perror("creat_sem"); 
 		exit(EXIT_FAILURE); 
 	}
 
+	if((mutex_nplein = creat_sem( shm_key + NPLEIN, 0)) == -1)
+	{ 
+		perror("creat_sem"); 
+		exit(EXIT_FAILURE); 
+	}
+
+	if((mutex_nvide = creat_sem( shm_key + NVIDE, MAX_PROD)) == -1)
+	{ 
+		perror("creat_sem"); 
+		exit(EXIT_FAILURE); 
+	}
 	temp.tete = 0;
 	temp.queue = 0;
 
@@ -99,6 +110,7 @@ int main( int argc, char **argv)
     noecho() ;			/* suppression de l'echo des caracteres tapes*/
     cbreak() ;			/* lecture non bufferisee */
 
+
 	// Création des fenêtres statiquement
 	for( i = 0; i < MAX_PROD; i++)
 	{
@@ -107,6 +119,7 @@ int main( int argc, char **argv)
 
     while (1)
     {
+		P(mutex_nplein);
 		// On (re)met nbDeProd à 0 
 		nbDeProd = 0;
 
@@ -149,6 +162,7 @@ int main( int argc, char **argv)
 			memoireP->queue = (memoireP->tete -1 + MAX_BUF) % MAX_BUF;
 		V(mutex_data);
 
+		V(mutex_nvide);
 		// S'il n'y a plus de producteurs, on quitte
 		if(nbDeProd == 0 && premier_lancement != 0)
 		{
@@ -199,11 +213,19 @@ void quitter(int signal)
 	// Suppression des sémaphores
 	if(mutex_data >= 0) 
 	{ 
-		del_sem(MUTEX_DATA); 
+		del_sem( shm_key + MUTEX_DATA); 
+	}
+	if(mutex_nvide >= 0) 
+	{ 
+		del_sem( shm_key + NVIDE); 
+	}
+	if(mutex_nplein >= 0) 
+	{ 
+		del_sem( shm_key + NPLEIN); 
 	}
 	if(mutex_tpa >= 0) 
 	{ 
-		del_sem(MUTEX_TPA); 
+		del_sem(shm_key + MUTEX_TPA); 
 	}
 
 	// Si on quitte avec le signal PLUSDEPROD on l'indique
