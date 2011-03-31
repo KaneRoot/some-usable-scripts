@@ -119,7 +119,6 @@ int main( int argc, char **argv)
 
     while (1)
     {
-		
 		P(nplein);
 		// On (re)met nbDeProd à 0 
 		nbDeProd = 0;
@@ -167,11 +166,9 @@ int main( int argc, char **argv)
 		// S'il n'y a plus de producteurs, on quitte
 		if(nbDeProd == 0 && premier_lancement != 0)
 		{
+			// On quitte le programme avec la constante PLUSDEPROD
 			quitter(PLUSDEPROD);
 		}
-		// Ralentissement volontaire du programme
-		// Pour cause d'utilisation excessive de CPU
-		//usleep(2); 
     }
 	// le programme n'est pas supposé pouvoir sortir de la boucle
 	exit(EXIT_FAILURE);
