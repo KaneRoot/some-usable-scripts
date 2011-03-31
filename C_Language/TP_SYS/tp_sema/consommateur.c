@@ -120,7 +120,6 @@ int main( int argc, char **argv)
 
     while (1)
     {
-		P(nplein);
 		// On (re)met nbDeProd à 0 
 		nbDeProd = 0;
 
@@ -139,6 +138,7 @@ int main( int argc, char **argv)
 		}
 		V(mutex_tpa);
 
+		P(nplein);
 		// On récupère la tête courante
 		// Et le message courant
 		P(mutex_data);

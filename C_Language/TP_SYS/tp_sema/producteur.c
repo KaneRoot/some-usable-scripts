@@ -47,6 +47,8 @@ int main( int argc, char **argv)
 		exit(EXIT_FAILURE); 
 	}
 
+	// Début des tests sur la mémoire partagée
+	// Et les sémaphores
 	if((memoireP = (MEMP *) shmat(shmid, 0 , 0766)) ==(void *) -1)	
 	{ 
 		perror("shmat"); 
