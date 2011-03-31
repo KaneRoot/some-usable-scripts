@@ -24,7 +24,7 @@
 // Déclaration en global de certaines variables
 // Utilisées par plusieurs fonctions du programme
 int shmid, shm_key;
-int mutex_data, mutex_tpa, mutex_nplein, mutex_nvide;
+int mutex_data, mutex_tpa, nplein, nvide;
 
 int main( int argc, char **argv)
 {
@@ -73,13 +73,13 @@ int main( int argc, char **argv)
 		exit(EXIT_FAILURE); 
 	}
 
-	if((mutex_nplein = creat_sem( shm_key + NPLEIN, 0)) == -1)
+	if((nplein = creat_sem( shm_key + NPLEIN, 0)) == -1)
 	{ 
 		perror("creat_sem"); 
 		exit(EXIT_FAILURE); 
 	}
 
-	if((mutex_nvide = creat_sem( shm_key + NVIDE, MAX_PROD)) == -1)
+	if((nvide = creat_sem( shm_key + NVIDE, MAX_PROD)) == -1)
 	{ 
 		perror("creat_sem"); 
 		exit(EXIT_FAILURE); 
@@ -119,7 +119,8 @@ int main( int argc, char **argv)
 
     while (1)
     {
-		P(mutex_nplein);
+		
+		P(nplein);
 		// On (re)met nbDeProd à 0 
 		nbDeProd = 0;
 
@@ -162,7 +163,7 @@ int main( int argc, char **argv)
 			memoireP->queue = (memoireP->tete -1 + MAX_BUF) % MAX_BUF;
 		V(mutex_data);
 
-		V(mutex_nvide);
+		V(nvide);
 		// S'il n'y a plus de producteurs, on quitte
 		if(nbDeProd == 0 && premier_lancement != 0)
 		{
@@ -170,7 +171,7 @@ int main( int argc, char **argv)
 		}
 		// Ralentissement volontaire du programme
 		// Pour cause d'utilisation excessive de CPU
-		usleep(2); 
+		//usleep(2); 
     }
 	// le programme n'est pas supposé pouvoir sortir de la boucle
 	exit(EXIT_FAILURE);
@@ -215,11 +216,11 @@ void quitter(int signal)
 	{ 
 		del_sem( shm_key + MUTEX_DATA); 
 	}
-	if(mutex_nvide >= 0) 
+	if(nvide >= 0) 
 	{ 
 		del_sem( shm_key + NVIDE); 
 	}
-	if(mutex_nplein >= 0) 
+	if(nplein >= 0) 
 	{ 
 		del_sem( shm_key + NPLEIN); 
 	}

@@ -37,7 +37,7 @@ int main( int argc, char **argv)
 	// Récupération du numéro d'IPC
 	int shm_key = atoi(argv[1]);
 
-	shmid = shmget(shm_key, sizeof(MEMP), 0766 | IPC_CREAT); 
+	shmid = shmget(shm_key, sizeof(MEMP), 0766);
 
 
 	if (shmid == -1) 
