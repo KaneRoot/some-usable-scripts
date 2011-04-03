@@ -14,6 +14,8 @@ int main( int argc, char **argv)
 	retour = supprimer(s,'C');
 	printf("%s\n",s);
 
+	free(s);
+
 	exit(EXIT_SUCCESS);
 }
 
@@ -27,7 +29,6 @@ int supprimer(char *s, char c)
 	int taille2 = taille;
 	while(i < taille)
 	{
-		printf("%c\n",s[i]);
 		if( *(s+i) == c)
 		{
 			k = i;
