@@ -24,7 +24,7 @@
 // Déclaration en global de certaines variables
 // Utilisées par plusieurs fonctions du programme
 int shmid, shm_key;
-int mutex_data, mutex_tpa;
+int mutex_data, mutex_tpa, nplein, nvide;
 
 int main( int argc, char **argv)
 {
@@ -62,23 +62,35 @@ int main( int argc, char **argv)
 		exit(EXIT_FAILURE); 
 	}
 		
-	if((mutex_data = creat_sem( MUTEX_DATA, 1)) == -1)
+	if((mutex_data = creat_sem( shm_key + MUTEX_DATA, 1)) == -1)
 	{ 
 		perror("creat_sem"); exit(EXIT_FAILURE); 
 	}
 
-	if((mutex_tpa = creat_sem( MUTEX_TPA, 1)) == -1)
+	if((mutex_tpa = creat_sem( shm_key + MUTEX_TPA, 1)) == -1)
 	{ 
 		perror("creat_sem"); 
 		exit(EXIT_FAILURE); 
 	}
 
+	if((nplein = creat_sem( shm_key + NPLEIN, 0)) == -1)
+	{ 
+		perror("creat_sem"); 
+		exit(EXIT_FAILURE); 
+	}
+
+	if((nvide = creat_sem( shm_key + NVIDE, MAX_PROD)) == -1)
+	{ 
+		perror("creat_sem"); 
+		exit(EXIT_FAILURE); 
+	}
 	temp.tete = 0;
 	temp.queue = 0;
 
 	for( i = 0; i < MAX_PROD ; i++)
 		temp.tpa[i] = -1;
 
+	// On initialise la mémoire à temp
 	P(mutex_data);
 		*memoireP = temp;
 	V(mutex_data);
@@ -98,6 +110,7 @@ int main( int argc, char **argv)
     initscr() ;			/* initialisation (obligatoire) de curses */
     noecho() ;			/* suppression de l'echo des caracteres tapes*/
     cbreak() ;			/* lecture non bufferisee */
+
 
 	// Création des fenêtres statiquement
 	for( i = 0; i < MAX_PROD; i++)
@@ -125,6 +138,7 @@ int main( int argc, char **argv)
 		}
 		V(mutex_tpa);
 
+		P(nplein);
 		// On récupère la tête courante
 		// Et le message courant
 		P(mutex_data);
@@ -140,6 +154,7 @@ int main( int argc, char **argv)
 			c = msgtemp.c;
 			w = tWindow[msgtemp.idp];
 
+			// Ensuite rafraichissement de la fenêtre
 			waddch(w,c) ;
 			wrefresh(w) ; 
 		}
@@ -149,14 +164,13 @@ int main( int argc, char **argv)
 			memoireP->queue = (memoireP->tete -1 + MAX_BUF) % MAX_BUF;
 		V(mutex_data);
 
+		V(nvide);
 		// S'il n'y a plus de producteurs, on quitte
 		if(nbDeProd == 0 && premier_lancement != 0)
 		{
+			// On quitte le programme avec la constante PLUSDEPROD
 			quitter(PLUSDEPROD);
 		}
-		// Ralentissement volontaire du programme
-		// Pour cause d'utilisation excessive de CPU
-		usleep(2); 
     }
 	// le programme n'est pas supposé pouvoir sortir de la boucle
 	exit(EXIT_FAILURE);
@@ -199,11 +213,19 @@ void quitter(int signal)
 	// Suppression des sémaphores
 	if(mutex_data >= 0) 
 	{ 
-		del_sem(MUTEX_DATA); 
+		del_sem( shm_key + MUTEX_DATA); 
+	}
+	if(nvide >= 0) 
+	{ 
+		del_sem( shm_key + NVIDE); 
+	}
+	if(nplein >= 0) 
+	{ 
+		del_sem( shm_key + NPLEIN); 
 	}
 	if(mutex_tpa >= 0) 
 	{ 
-		del_sem(MUTEX_TPA); 
+		del_sem(shm_key + MUTEX_TPA); 
 	}
 
 	// Si on quitte avec le signal PLUSDEPROD on l'indique

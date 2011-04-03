@@ -17,7 +17,9 @@
 // nom_de_la_fenetre variable globale car je la free 
 // dans "quitter()"
 char * nom_de_la_fenetre = NULL;
-int mutex_data, mutex_tpa, i=0;
+int i = 0;
+int mutex_data, mutex_tpa;
+int nvide,nplein;
 MEMP *memoireP; 
 
 void quitter(int signal);
@@ -43,30 +45,43 @@ int main( int argc, char **argv)
 
 	shmid = shmget(shm_key, sizeof(MEMP), 0766); 
 
-
 	if (shmid == -1) 
 	{ 
 		perror("shmget"); 
 		exit(EXIT_FAILURE); 
 	}
 
+	// Début des tests sur la mémoire partagée
+	// Et les sémaphores
 	if((memoireP = (MEMP *) shmat(shmid, 0 , 0766)) ==(void *) -1)	
 	{ 
 		perror("shmat"); 
 		exit(EXIT_FAILURE); 
 	}
-	if((mutex_data = open_sem( sem_key_data)) == -1)	
+	if((mutex_data = open_sem( shm_key + MUTEX_DATA)) == -1)	
 	{ 
 		perror("open_sem"); 
 		exit(EXIT_FAILURE); 
 	}
-	if((mutex_tpa = open_sem( sem_key_tpa)) == -1)		
+	if((mutex_tpa = open_sem( shm_key + MUTEX_TPA)) == -1)		
 	{ 
 		perror("open_sem"); 
 		exit(EXIT_FAILURE); 
 	}
 
+	if((nplein = open_sem( shm_key + NPLEIN)) == -1)	
+	{ 
+		perror("open_sem"); 
+		exit(EXIT_FAILURE); 
+	}
+
+	if((nvide = open_sem( shm_key + NVIDE)) == -1)	
+	{ 
+		perror("open_sem"); 
+		exit(EXIT_FAILURE); 
+	}
 	P(mutex_tpa);
+		// boucle pour savoir s'il reste de la place
 		for(i = 0; i < MAX_PROD && memoireP->tpa[i] != -1 ; i++);
 		// Si on n'a plus de place dans le TPA (tous pris) alors on quitte
 		if(memoireP->tpa[i] != -1) 
@@ -85,7 +100,6 @@ int main( int argc, char **argv)
     noecho() ;			/* suppression de l'echo des caracteres tapes*/
     cbreak() ;			/* lecture non bufferisee */
 
-
 	// Je donne un nom à ma fenêtre
 	nom_de_la_fenetre = (char *) malloc(sizeof(char *) * NAMESIZE);
 	snprintf(nom_de_la_fenetre, NAMESIZE, "PRODUCTEUR %d", i);
@@ -94,6 +108,7 @@ int main( int argc, char **argv)
 	// On quitte le producteur en tappant CTRL_D
     while (( c = wgetch(fenetre)) != CTRL_D)
 	{
+		P(nvide);
 
 		P(mutex_data);
 			if(((memoireP->queue -1 + MAX_BUF) % MAX_BUF) != (memoireP->tete % MAX_BUF) )
@@ -104,6 +119,7 @@ int main( int argc, char **argv)
 			}
 		V(mutex_data);
 
+		V(nplein);
         waddch(fenetre,c) ;
         wrefresh(fenetre) ; 
 	}
