@@ -125,7 +125,7 @@ int main( int argc, char **argv)
 
 		// On vérifie qu'il y ait toujours des producteurs
 		P(mutex_tpa);
-		for(i = 0 ; i < MAX_PROD && nbDeProd == 0 ; i++ )
+		for(i = 0 ; i < MAX_PROD ; i++ )
 		{
 			if(memoireP->tpa[i] != -1)
 			{
