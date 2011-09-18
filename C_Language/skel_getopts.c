@@ -23,7 +23,7 @@ int main(int argc, char * argv[])
 				break;
 			case 'o':
 			case 'l':
-				fprintf(stdout,"option %c",option);
+				fprintf(stdout,"option %c\n",option);
 				break;
 			case '?':
 				fprintf(stdout,"erreur : %s\n",optopt);
