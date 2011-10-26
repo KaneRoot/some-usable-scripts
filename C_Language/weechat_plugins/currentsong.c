@@ -4,6 +4,7 @@
 #include <string.h>
 #include <weechat/weechat-plugin.h>
 
+#define TAILLE_BUFFER_CURRENT_SONG 100
 WEECHAT_PLUGIN_NAME("currentsong");
 WEECHAT_PLUGIN_DESCRIPTION("Affiche la musique en cours en utilisant mpc");
 WEECHAT_PLUGIN_AUTHOR("Karchnu <kane.root@gmail.com>");
@@ -22,9 +23,16 @@ int cb_currentsong_plugin(void *data, struct t_gui_buffer *buffer, int argc, cha
 	int p[2];
 	//char local_buffer[100];
 	char * song;
-	char * cmd[] = { "mpc", "-h" , "192.168.0.100",(char *)0 };
-	song = malloc(200*sizeof(char));
+	char affichage[TAILLE_BUFFER_CURRENT_SONG + 10];
+	int i;
+	char * cmd[] = { "mpc", "-h" , "192.168.0.100","current", (char *)0 };
+	song = malloc(TAILLE_BUFFER_CURRENT_SONG*sizeof(char));
 	if(song == NULL) return WEECHAT_RC_ERROR;
+
+	for(i = 0 ; i < TAILLE_BUFFER_CURRENT_SONG ; i++)
+		song[i] = '\0';
+	for(i = 0 ; i < TAILLE_BUFFER_CURRENT_SONG + 10 ; i++)
+		affichage[i] = '\0';
 
 	pipe(p);
 	if(fork() == 0)
@@ -34,15 +42,13 @@ int cb_currentsong_plugin(void *data, struct t_gui_buffer *buffer, int argc, cha
 		dup2(p[1],1);
 		execvp("mpc", cmd);
 	}
-
 	close(p[1]);
-	read(p[0], song, 200);
+	read(p[0], song, TAILLE_BUFFER_CURRENT_SONG);
 	close(p[0]);
-
-	if(buffer)
-		weechat_printf (buffer, "J'écoute : %s %s",
-				weechat_color ("yellow,red"),
-				song);
+	sprintf(affichage,"/me ♪ %s", song);
+	//sprintf(affichage,"/me ♪ %s%s", weechat_color ("_red"), song); // Ne s'affiche pas correctement chez les autres
+	weechat_utf8_normalize(affichage, '?'); // Pour ne pas avoir de caractères non-lisibles
+	weechat_command(buffer,affichage);
 	free(song);
 
 	return WEECHAT_RC_OK;
