@@ -8,16 +8,13 @@ CC=gcc
 CFLAGS = -Wall -fPIC
 EXEC = currentsong
 
-gcc -fPIC -Wall -c toto.c
-gcc -shared -fPIC -o libtoto.so toto.o
-
 all: $(EXEC)
 
 $(EXEC) : $(EXEC).o 
-	$(CC) -o lib$(EXEC).so -shared $<
-
+	$(CC) -fPIC -shared -o lib$(EXEC).so $<
+			   
 %.o : %.c 
-	$(CC) -c $< $(OPTIONS) 
+	$(CC) $(CFLAGS) -c $<  
 
 clean:
 	@rm -rf *.o *.out
