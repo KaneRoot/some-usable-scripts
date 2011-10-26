@@ -1,3 +1,4 @@
+#include <unistd.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -18,7 +19,31 @@ int cb_currentsong_plugin(void *data, struct t_gui_buffer *buffer, int argc, cha
 	(void) buffer;
 	(void) argv;
 
-	weechat_printf (buffer, "TEST DE PLUGIN LAWWWWWWWWWWWWWL");
+	int p[2];
+	//char local_buffer[100];
+	char * song;
+	char * cmd[] = { "mpc", "-h" , "192.168.0.100",(char *)0 };
+	song = malloc(200*sizeof(char));
+	if(song == NULL) return WEECHAT_RC_ERROR;
+
+	pipe(p);
+	if(fork() == 0)
+	{
+		close(p[0]);
+		close(0); close(2);
+		dup2(p[1],1);
+		execvp("mpc", cmd);
+	}
+
+	close(p[1]);
+	read(p[0], song, 200);
+	close(p[0]);
+
+	if(buffer)
+		weechat_printf (buffer, "J'écoute : %s %s",
+				weechat_color ("yellow,red"),
+				song);
+	free(song);
 
 	return WEECHAT_RC_OK;
 }
