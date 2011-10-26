@@ -28,6 +28,8 @@ int main(int argc, char * argv[])
 			case '?':
 				fprintf(stdout,"erreur : %s\n",optopt);
 				break;
+			default:
+				break;
 		}
 	}
 	// s'il reste des options
