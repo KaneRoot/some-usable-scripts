@@ -50,7 +50,8 @@ int cb_currentsong_plugin(void *data, struct t_gui_buffer *buffer, int argc, cha
 	strcpy(cmd[i-1],"current");
 	if(argc == 4)
 	{
-		strcpy(cmd[1],argv[1]);
+		if(strcmp("host", argv[1]) == 0)
+			strcpy(cmd[1],"-h");
 		strcpy(cmd[2],argv[2]);
 	}
 
@@ -98,10 +99,10 @@ int weechat_plugin_init (struct t_weechat_plugin *plugin, int argc, char *argv[]
     weechat_plugin = plugin;
 
     weechat_hook_command ("currentsong",
-                          "Affiche la chanson que vous écoutez",
-						  "noargs",
-						  "no arguments",
-						  NULL,
+                          "Affiche le morceau que vous écoutez",
+						  "[host ip]",
+						  "si mpd n'est pas en local : host <ip>",
+						  "host ",
                           &cb_currentsong_plugin, NULL);
 
     return WEECHAT_RC_OK;
