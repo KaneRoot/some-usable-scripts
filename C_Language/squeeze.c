@@ -28,10 +28,3 @@ void squeeze( char *s , char *t, char c)
 	}
 	t[k]='\0';
 }
-
-void miroir ( char *s, char *t)
-{
-	while( *s != '\0')
-	{			
-	}
-}
