@@ -1,3 +1,14 @@
+/* Karchnu : <kane.root@gmail.com>
+ *
+ * currentsong : affiche le morceau que vous écoutez dans le buffer courant
+ *
+ * Pour l'ajouter : make ; cp libcurrentsong.so ~/.weechat/plugins/
+ * Puis dans weechat : /plugin load libcurrentsong.so
+ *
+ */
+
+#include <sys/types.h>
+#include <sys/wait.h>
 #include <unistd.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -5,6 +16,8 @@
 #include <weechat/weechat-plugin.h>
 
 #define TAILLE_BUFFER_CURRENT_SONG 100
+#define TAILLE_OPTIONS 15
+
 WEECHAT_PLUGIN_NAME("currentsong");
 WEECHAT_PLUGIN_DESCRIPTION("Affiche la musique en cours en utilisant mpc");
 WEECHAT_PLUGIN_AUTHOR("Karchnu <kane.root@gmail.com>");
@@ -20,14 +33,29 @@ int cb_currentsong_plugin(void *data, struct t_gui_buffer *buffer, int argc, cha
 	(void) buffer;
 	(void) argv;
 
+	argc = (argc >= 3) ? 4 : 2;
+
+	int i,status;
 	int p[2];
-	//char local_buffer[100];
-	char * song;
-	char affichage[TAILLE_BUFFER_CURRENT_SONG + 10];
-	int i;
-	char * cmd[] = { "mpc", "-h" , "192.168.0.100","current", (char *)0 };
-	song = malloc(TAILLE_BUFFER_CURRENT_SONG*sizeof(char));
-	if(song == NULL) return WEECHAT_RC_ERROR;
+	char **cmd;
+	char *song;
+	char *affichage;
+
+	cmd = (char **) malloc(sizeof(char*) * argc+1);
+	for(i = 0 ; i < argc ; i++)
+		cmd[i] = malloc(sizeof(char) * TAILLE_OPTIONS);
+	cmd[i] = NULL;
+
+	strcpy(cmd[0],"mpc");
+	strcpy(cmd[i-1],"current");
+	if(argc == 4)
+	{
+		strcpy(cmd[1],argv[1]);
+		strcpy(cmd[2],argv[2]);
+	}
+
+	song = malloc(TAILLE_BUFFER_CURRENT_SONG * sizeof(char));
+	affichage = malloc((TAILLE_BUFFER_CURRENT_SONG + 10) * sizeof(char));
 
 	for(i = 0 ; i < TAILLE_BUFFER_CURRENT_SONG ; i++)
 		song[i] = '\0';
@@ -45,11 +73,22 @@ int cb_currentsong_plugin(void *data, struct t_gui_buffer *buffer, int argc, cha
 	close(p[1]);
 	read(p[0], song, TAILLE_BUFFER_CURRENT_SONG);
 	close(p[0]);
+
+	wait(&status);
+	if(WEXITSTATUS(status) != 0)
+		sprintf(song,"didn't worked !!!");
 	sprintf(affichage,"/me ♪ %s", song);
+	
 	//sprintf(affichage,"/me ♪ %s%s", weechat_color ("_red"), song); // Ne s'affiche pas correctement chez les autres
-	weechat_utf8_normalize(affichage, '?'); // Pour ne pas avoir de caractères non-lisibles
+	//weechat_utf8_normalize(affichage, '?'); // Pour ne pas avoir de caractères non-lisibles
+
 	weechat_command(buffer,affichage);
-	free(song);
+
+	free(song); // :')
+	for(i = 0 ; i < argc ; i++)
+		free(cmd[i]);
+	free(cmd);
+	free(affichage);
 
 	return WEECHAT_RC_OK;
 }
