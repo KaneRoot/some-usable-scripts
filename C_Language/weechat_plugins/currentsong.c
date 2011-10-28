@@ -80,15 +80,18 @@ int cb_currentsong_plugin(void *data, struct t_gui_buffer *buffer, int argc, cha
 	{
 		for(i = 0 ; i < TAILLE_BUFFER_CURRENT_SONG ; i++)
 			song[i] = '\0';
-		sprintf(song,"/currentsong didn't work !!! You should probably use the 'host <ip|url>' or 'port num' option");
-		sprintf(affichage,"pluginerr\t%s",song);
+		snprintf(song, TAILLE_BUFFER_CURRENT_SONG, "%s didn't work !!! Look at the options !",argv[0]);
+		snprintf(affichage, TAILLE_BUFFER_CURRENT_SONG, "%s%s",weechat_prefix("error"),song);
 		weechat_printf(buffer,affichage);
 		return WEECHAT_RC_ERROR;
 	}
-	sprintf(affichage,"/me ♪ %s", song);
+	if(strcmp("",song) == 0)
+		snprintf(affichage,TAILLE_BUFFER_CURRENT_SONG, "/me ! ♪");
+	else
+		snprintf(affichage,TAILLE_BUFFER_CURRENT_SONG, "/me ♪ %s", song);
 	
-	//sprintf(affichage,"/me ♪ %s%s", weechat_color ("_red"), song); // Ne s'affiche pas correctement chez les autres
-	//weechat_utf8_normalize(affichage, '?'); // Pour ne pas avoir de caractères non-lisibles
+	//snprintf(affichage, TAILLE_BUFFER_CURRENT_SONG, "/me ♪ %s%s", weechat_color ("_red"), song);
+	//weechat_utf8_normalize(affichage, '?');
 
 	weechat_command(buffer,affichage);
 
@@ -107,9 +110,9 @@ int weechat_plugin_init (struct t_weechat_plugin *plugin, int argc, char *argv[]
 
     weechat_hook_command ("currentsong",
                           "Affiche le morceau que vous écoutez",
-						  "[host ip]",
-						  "si mpd n'est pas en local : host <ip|url>",
-						  "host ",
+						  "[host <ip|url> [port]]",
+						  "si mpd n'est pas en local : host <ip|url> [port]",
+						  "host %(the_host) %(the_port)",
                           &cb_currentsong_plugin, NULL);
 
     return WEECHAT_RC_OK;
