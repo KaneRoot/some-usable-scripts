@@ -1,0 +1,9 @@
+#!/bin/bash
+
+dir=~/Téléchargements/
+torrentsdir=~/torrents/
+server=server
+
+find $dir -name "*.torrent" -exec transmission-remote-cli -a "{}" && mv "{}" $torrentsdir \;
+rsync -av $torrentsdir $server:$torrentsdir
+#ssh $server $(< add-torrents-remote)

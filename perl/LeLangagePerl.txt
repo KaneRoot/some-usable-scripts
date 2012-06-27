@@ -1,0 +1,26 @@
+Le langage Perl
+
+Variables : 
+	Scalaires : $
+	Structurées : tableaux : @ 
+				  table de hash : %
+
+
+Langage contextuel = ne pas définir de type de variable
+
+$_ = variable par défaut
+
+exemple : 
+	$prenom = "Eric"
+	print "$prenom\n";
+	print $prenom."\n";
+	print $prenom,"\n";
+	print '$prenom\n'
+
+Autre exemple : 
+#!/usr/bin/perl
+
+while(<>)
+{
+	print;
+};
