@@ -5,10 +5,7 @@
 open(F, "<$ARGV[0]") || die "Problème d'ouverture de fichier ! ";
 
 $i = 0 ;
-while(<F>)
-{
-	$i++;
-};
+$i++ while(<F>);
 
 close(F);
 

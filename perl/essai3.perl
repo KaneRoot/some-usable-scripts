@@ -1,23 +1,28 @@
 #!/usr/bin/perl
 
+use 5.16.0;
+
 # Exercices tableaux
-@alphabet = ("a" .. "z");
-@cartes = ("01".."10","valet","dame","roi");
-@annee=("a1","a2","lp");
-@promo=@annee;
-@tout = (@alphabet , "dut" , @cartes , 1145, "\n");
+my @alphabet = ("a" .. "z");
+my @cartes = ("01".."10","valet","dame","roi");
+my @annee=("a1","a2","lp");
+my @promo=@annee;
+my @tout = (@alphabet , "trucmachin" , @cartes , 1145, "\n");
 
 print @tout;
 
 # Autre exercice
 
-@jours=("Lundi","Mardi","Mercredi");
+my @jours=("Lundi","Mardi","Mercredi");
 
-foreach $jours(@jours)
-{
-	print $jours."\n";
-}
+# explicite
+#foreach $jours(@jours)
+#{
+#	print $jours."\n";
+#}
 
+say foreach @jours ;
+	
 # Perl : les nombres : < > <= >= == !=
 #		 Chaînes : lt gt eq ne
 

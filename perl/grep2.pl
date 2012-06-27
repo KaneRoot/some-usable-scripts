@@ -6,9 +6,7 @@ foreach $f (@ARGV)
 {
 	open(F,"<$f") || die "Impossible de lire le fichier $f : $!";
 	
-	while(<F>)
-	{
-		if(/$motif/)
-		{	print "Motif trouvé dans $f : $_ \n";}
+	while(<F>) {
+		print "Motif trouvé dans $f : $_ \n" if(/$motif/);
 	};
 }
