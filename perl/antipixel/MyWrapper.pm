@@ -74,9 +74,11 @@ sub _build_colors {
 		bleu => [0, 0, 255],
 		rouge => [255, 0, 0],
 		vert => [0, 255, 0],
+		vertf => [0, 100, 0],
 		noir => [0, 0, 0],
 		blanc => [255, 255, 255],
-		gris => [140, 140, 140]
+		gris => [140, 140, 140],
+		grisf => [100, 100, 100]
 	};
 }
 sub afficher_couleurs {
@@ -122,11 +124,27 @@ sub enregistrement_image {
 	print DISPLAY $im->png;
 	close DISPLAY;
 }
+sub allocation_des_couleurs {
+	my ($self, $im) = @_;
+
+	my %couleurs = %{$self->couleurs};
+	my %couleurs_allouees;
+# allocate some colors
+	while( my ($key , $value) = each %couleurs)
+	{
+		#say "La couleur $key est : " . join(', ' , @$value);
+		$couleurs_allouees{$key} = $im->colorAllocate($$value[0], $$value[1], $$value[2]);
+	}
+	return %couleurs_allouees ;
+}
+sub options_sortie_image {
+	my ($self, $im) = @_;
+# make the background transparent and interlaced
+#$im->transparent($couleurs_allouee{'blanc'});
+	$im->interlaced('true');
+}
 sub do_img {
 	my ($self) = @_;
-	my %couleurs = %{$self->couleurs};
-	my %couleurs_allouee;
-
 	my @mots = split / /, $self->message;
 	my $x = $self->calcul_taille_x;
 	my $y = $self->calcul_taille_y;
@@ -135,20 +153,14 @@ sub do_img {
 
 # create a new image
 	my $im = new GD::Image($x,$y);
-
-# allocate some colors
-	while( my ($key , $value) = each %couleurs)
-	{
-		#say "La couleur $key est : " . join(', ' , @$value);
-		$couleurs_allouee{$key} = $im->colorAllocate($$value[0], $$value[1], $$value[2]);
-	}
-# make the background transparent and interlaced
-#$im->transparent($couleurs_allouee{'blanc'});
-	$im->interlaced('true');
-	$im->rectangle(0, 0, $x -1, $y -1, $couleurs_allouee{$self->couleur_contour});
-	$im->filledRectangle(1, 1, $x -2, $y -2, $couleurs_allouee{$self->couleur_background});
-
-	$im->filledRectangle(2, 2, $taille_progress_bar, $y -3, $couleurs_allouee{$self->couleur_interne});
+# allocation des couleurs
+	my %couleurs_allouees = $self->allocation_des_couleurs( $im );
+# options de sortie de l'image (entrelacée etc.)
+	$self->options_sortie_image ( $im );
+# début de la construction de l'image à proprement dite
+	$im->rectangle(0, 0, $x -1, $y -1, $couleurs_allouees{$self->couleur_contour});
+	$im->filledRectangle(1, 1, $x -2, $y -2, $couleurs_allouees{$self->couleur_background});
+	$im->filledRectangle(2, 2, $taille_progress_bar, $y -3, $couleurs_allouees{$self->couleur_interne});
 
 	$self->enregistrement_image( $im );
 }
