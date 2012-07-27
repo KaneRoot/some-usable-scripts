@@ -72,13 +72,16 @@ option taille_y => ( is => 'rw',
 sub _build_colors {
 	{
 		bleu => [0, 0, 255],
+		bleuf => [0, 0, 100],
 		rouge => [255, 0, 0],
+		rougef => [100, 0, 0],
 		vert => [0, 255, 0],
 		vertf => [0, 100, 0],
+		gris => [150, 150, 150],
+		grisf => [100, 100, 100],
+
 		noir => [0, 0, 0],
-		blanc => [255, 255, 255],
-		gris => [140, 140, 140],
-		grisf => [100, 100, 100]
+		blanc => [255, 255, 255]
 	};
 }
 sub afficher_couleurs {
@@ -97,6 +100,7 @@ sub afficher_valeurs_actuelles {
 	say "Output file : " . $self->output;
 	say "Distance entre mots : " . $self->distance_entre_mots;
 	say "couleur_interne : " . $self->couleur_interne;
+	say "couleur_contour : " . $self->couleur_contour;
 	say "couleur_externe : " . $self->couleur_externe;
 	say "couleur_background : " . $self->couleur_background;
 	say "taille_x : " . $self->taille_x;
@@ -108,7 +112,7 @@ sub calcul_taille_x {
 	my $taille_x = $self->taille_x;
 	my @mots = split / /, $self->message;
 	if( $self->extends ) {
-		$taille_x += length $_ for( @mots ) ;
+		$taille_x += 3 * length $_ for( @mots ) ;
 	}
 	return $taille_x;
 }
@@ -140,16 +144,31 @@ sub allocation_des_couleurs {
 sub options_sortie_image {
 	my ($self, $im) = @_;
 # make the background transparent and interlaced
-#$im->transparent($couleurs_allouee{'blanc'});
+#$im->transparent($couleurs_allouees{'blanc'});
 	$im->interlaced('true');
+}
+sub do_progress_bar{
+	my ($self, $im, $couleurs_allouees, $x, $y) = @_;
+	my $taille_progress_bar = $self->progress_bar * ($x - 1) / 100;
+	my %couleurs_allouees = %$couleurs_allouees;
+	$im->filledRectangle(2, 2, $taille_progress_bar, $y -3, $couleurs_allouees{$self->couleur_interne});
+}
+sub do_antipixel_button {
+	my ($self, $im, $couleurs_allouees, $mots, $x, $y) = @_;
+	my %couleurs_allouees = %$couleurs_allouees;
+	my @mots = @$mots;
+	my $current_position = 10;
+	for my $i (@mots) {
+		$im->filledRectangle($current_position - 3, 2, $current_position + length($i) * 6 + 7, $y - 3, $couleurs_allouees{$self->couleur_interne});
+		$im->string(gdMediumBoldFont, $current_position , $y - 0.75 * $y, $i, $couleurs_allouees{'blanc'});
+		$current_position += length($i) * 6 + 15;
+	}
 }
 sub do_img {
 	my ($self) = @_;
 	my @mots = split / /, $self->message;
 	my $x = $self->calcul_taille_x;
 	my $y = $self->calcul_taille_y;
-	my $intersection = $x -30;
-	my $taille_progress_bar = $self->progress_bar * ($x - 1) / 100;
 
 # create a new image
 	my $im = new GD::Image($x,$y);
@@ -160,7 +179,9 @@ sub do_img {
 # début de la construction de l'image à proprement dite
 	$im->rectangle(0, 0, $x -1, $y -1, $couleurs_allouees{$self->couleur_contour});
 	$im->filledRectangle(1, 1, $x -2, $y -2, $couleurs_allouees{$self->couleur_background});
-	$im->filledRectangle(2, 2, $taille_progress_bar, $y -3, $couleurs_allouees{$self->couleur_interne});
+
+	$self->do_progress_bar($im,\%couleurs_allouees,$x, $y) if defined $self->progress_bar;
+	$self->do_antipixel_button($im, \%couleurs_allouees, \@mots, $x, $y) unless defined $self->progress_bar;
 
 	$self->enregistrement_image( $im );
 }
