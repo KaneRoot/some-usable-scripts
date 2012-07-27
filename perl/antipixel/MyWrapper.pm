@@ -160,7 +160,7 @@ sub do_antipixel_button {
 	my $current_position = 10;
 	for my $i (@mots) {
 		$im->filledRectangle($current_position - 3, 2, $current_position + length($i) * 6 + 7, $y - 3, $couleurs_allouees{$self->couleur_interne});
-		$im->string(gdTinyFont, $current_position , $y - 0.75 * $y, $i, $couleurs_allouees{'blanc'});
+		$im->string(gdMediumBoldFont, $current_position , $y - 0.75 * $y, $i, $couleurs_allouees{'blanc'});
 		$current_position += length($i) * 6 + 15;
 	}
 }
