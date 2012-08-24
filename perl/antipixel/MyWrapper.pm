@@ -6,7 +6,7 @@ use v5.14;
 use Moo;
 use MooX::Options;
 
-has couleurs => ( is => 'ro', builder => '_build_colors' );
+has qw[couleurs is ro builder _build_colors];
 
 option distance_entre_mots => ( is => 'rw',
 		doc => 'distance en pixels de chaque mot du message',
