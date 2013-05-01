@@ -9,9 +9,10 @@ CFLAGS = -Wall -fPIC
 EXEC = currentsong
 
 all: $(EXEC)
+	mv song.so plugins/
 
 $(EXEC) : $(EXEC).o 
-	$(CC) -fPIC -shared -o lib$(EXEC).so $<
+	$(CC) -fPIC -shared -o song.so $<
 			   
 %.o : %.c 
 	$(CC) $(CFLAGS) -c $<  

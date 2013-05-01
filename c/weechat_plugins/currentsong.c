@@ -2,8 +2,8 @@
  *
  * currentsong : affiche le morceau que vous écoutez dans le buffer courant
  *
- * Pour l'ajouter : make ; cp libcurrentsong.so ~/.weechat/plugins/
- * Puis dans weechat : /plugin load libcurrentsong.so
+ * Pour l'ajouter : make ; cp song.so ~/.weechat/plugins/
+ * Puis dans weechat : /plugin load song.so
  *
  */
 
@@ -26,14 +26,13 @@ WEECHAT_PLUGIN_LICENSE("GPL3");
 
 struct t_weechat_plugin *weechat_plugin = NULL;
 
-int cb_currentsong_plugin(void *data, struct t_gui_buffer *buffer, int argc, char **argv, char **argv_eol)
+int cb_currentsong_plugin(void *data, struct t_gui_buffer *buffer, 
+		int argc, char **argv, char **argv_eol)
 {
 	/* pour que le compilateur C soit content */
 	(void) data;
 	(void) buffer;
 	(void) argv;
-
-	argc = (argc >= 3) ? 4 : 2;
 
 	int i,status;
 	int p[2];
@@ -41,22 +40,30 @@ int cb_currentsong_plugin(void *data, struct t_gui_buffer *buffer, int argc, cha
 	char *song;
 	char *affichage;
 
-	cmd = (char **) malloc(sizeof(char*) * argc+1);
-	for(i = 0 ; i < argc ; i++)
+	song = malloc(TAILLE_BUFFER_CURRENT_SONG * sizeof(char));
+	affichage = malloc((TAILLE_BUFFER_CURRENT_SONG + 10) * sizeof(char));
+
+	cmd = (char **) malloc(sizeof(char*) * argc+2);
+	for(i = 0 ; i < argc +1 ; i++)
 		cmd[i] = malloc(sizeof(char) * TAILLE_OPTIONS);
 	cmd[i] = NULL;
 
-	strcpy(cmd[0],"mpc");
-	strcpy(cmd[i-1],"current");
-	if(argc == 4)
-	{
-		if(strcmp("host", argv[1]) == 0)
-			strcpy(cmd[1],"-h");
-		strcpy(cmd[2],argv[2]);
+	strcpy(cmd[0],"mpc"); // la commande
+	strcpy(cmd[1],"current"); // la chanson courante
+	if(argc >= 3) {
+		if(strcmp("host", argv[1]) == 0) {
+			strcpy(cmd[2], "-h");
+			strcpy(cmd[3], argv[2]);
+		}
 	}
-
-	song = malloc(TAILLE_BUFFER_CURRENT_SONG * sizeof(char));
-	affichage = malloc((TAILLE_BUFFER_CURRENT_SONG + 10) * sizeof(char));
+	if(argc >= 4) {
+		if(strcmp("port", argv[3]) == 0) {
+			strcpy(cmd[4], "-p");
+			strcpy(cmd[5], argv[4]);
+			cmd[6] = NULL;
+		}
+	}
+	sleep(2);
 
 	for(i = 0 ; i < TAILLE_BUFFER_CURRENT_SONG ; i++)
 		song[i] = '\0';
@@ -80,8 +87,10 @@ int cb_currentsong_plugin(void *data, struct t_gui_buffer *buffer, int argc, cha
 	{
 		for(i = 0 ; i < TAILLE_BUFFER_CURRENT_SONG ; i++)
 			song[i] = '\0';
-		snprintf(song, TAILLE_BUFFER_CURRENT_SONG, "%s didn't work !!! Look at the options !",argv[0]);
-		snprintf(affichage, TAILLE_BUFFER_CURRENT_SONG, "%s%s",weechat_prefix("error"),song);
+		snprintf(song, TAILLE_BUFFER_CURRENT_SONG, 
+				"%s didn't work !!! Look at the options !",argv[0]);
+		snprintf(affichage, TAILLE_BUFFER_CURRENT_SONG, "%s%s",
+				weechat_prefix("error"),song);
 		weechat_printf(buffer,affichage);
 		return WEECHAT_RC_ERROR;
 	}
@@ -90,13 +99,14 @@ int cb_currentsong_plugin(void *data, struct t_gui_buffer *buffer, int argc, cha
 	else
 		snprintf(affichage,TAILLE_BUFFER_CURRENT_SONG, "/me ♪ %s", song);
 	
-	//snprintf(affichage, TAILLE_BUFFER_CURRENT_SONG, "/me ♪ %s%s", weechat_color ("_red"), song);
+	//snprintf(affichage, TAILLE_BUFFER_CURRENT_SONG, 
+	//"/me ♪ %s%s", weechat_color ("_red"), song);
 	//weechat_utf8_normalize(affichage, '?');
 
 	weechat_command(buffer,affichage);
 
 	free(song); // :')
-	for(i = 0 ; i < argc ; i++)
+	for(i = 0 ; i < argc + 1 ; i++)
 		free(cmd[i]);
 	free(cmd);
 	free(affichage);
@@ -104,15 +114,16 @@ int cb_currentsong_plugin(void *data, struct t_gui_buffer *buffer, int argc, cha
 	return WEECHAT_RC_OK;
 }
 
-int weechat_plugin_init (struct t_weechat_plugin *plugin, int argc, char *argv[])
+int weechat_plugin_init (struct t_weechat_plugin *plugin, 
+		int argc, char *argv[])
 {
     weechat_plugin = plugin;
 
     weechat_hook_command ("currentsong",
                           "Affiche le morceau que vous écoutez",
-						  "[host <ip|url> [port]]",
-						  "si mpd n'est pas en local : host <ip|url> [port]",
-						  "host %(the_host) %(the_port)",
+						  "[host <ip|url> [port <port>]]",
+						  "si mpd n'est pas en local : [host <ip|url> [port <port>]]",
+						  "host %(the_host) port %(the_port)",
                           &cb_currentsong_plugin, NULL);
 
     return WEECHAT_RC_OK;
