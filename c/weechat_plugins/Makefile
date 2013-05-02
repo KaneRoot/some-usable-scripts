@@ -9,7 +9,7 @@ CFLAGS = -Wall -fPIC
 EXEC = currentsong
 
 all: $(EXEC)
-	mv song.so plugins/
+	mv song.so ~/.weechat/plugins/
 
 $(EXEC) : $(EXEC).o 
 	$(CC) -fPIC -shared -o song.so $<
