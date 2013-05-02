@@ -63,7 +63,6 @@ int cb_currentsong_plugin(void *data, struct t_gui_buffer *buffer,
 			cmd[6] = NULL;
 		}
 	}
-	sleep(2);
 
 	for(i = 0 ; i < TAILLE_BUFFER_CURRENT_SONG ; i++)
 		song[i] = '\0';
