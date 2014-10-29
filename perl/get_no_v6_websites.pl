@@ -5,29 +5,87 @@ use v5.14;
 
 die "usage : ./$0 website_list.txt" if @ARGV != 1;
 
-say "<html><body><p>";
-
 my @tab;
+my %dom;
 
-while(<>) {
-    chomp;
-	last if $_ eq "";
+sub get_urls {
+    while(<>) {
+        chomp;
+        last if $_ eq "";
 
-	if(m#/#) {
-		$_ =~ s#https?://##;
-		@tab = split '/', $_;
-		$_ = $tab[0];
-	}
+        if(m#/#) {
+            $_ =~ s#https?://##;
+            @tab = split '/', $_;
+            $_ = $tab[0];
+        }
 
-    my $ret = `/usr/bin/dig +short AAAA $_`;
+        # securité
+        @tab = split ';', $_;
+        $_ = $tab[0];
+        m/^([0-9a-zA-Z\.-]+)/;
+        $_ = $1;
 
-    if(length $ret != 0) {
-        say "$_ is ok<br />";
-    }
-    else {
-        say "<b>WARNING: $_ NOT OK</b><br />";
+        $dom{$_} = 0;
     }
 }
 
-say "</p></body></html>";
+sub test_ipv6 {
+    my $domain = shift;
 
+    my $ret = `/usr/bin/dig +short AAAA $domain`;
+
+    if(not length $ret) { # no ipv6 ? check www.$domain
+        $ret = `/usr/bin/dig +short AAAA www.$domain`;
+    }
+
+    if(length $ret != 0) { # there is at least an IPv6 configured
+        chomp $ret;
+
+        my @var = split "\n", $ret;
+        for(@var) {
+
+            chomp $ret;
+            next unless /:/;
+            say $ret;
+
+            # we try to reach the website's server
+            my $retping = 
+            `/bin/ping6 -i 0.5 -c 2 $ret | grep ' 0% packet loss'`;
+            chomp $retping;
+
+            if(length $retping) {
+                $dom{$domain}++;
+            }
+        }
+
+    }
+
+}
+
+sub check_reachability {
+
+    say '<!-- ';
+    for(keys %dom) {
+        test_ipv6 $_;
+    }
+    say '--!>';
+}
+
+sub do_html {
+    my @passed = grep { $dom{$_} } keys %dom;
+    my @notpassed = grep { not $dom{$_} } keys %dom;
+
+    say '<html><head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    </head><body>';
+    say "<h1> Domaines accessibles en IPv6 (♥) : </h1>";
+    say "<p>", join(', ', @passed), "</p>";
+
+    say "<h1> Mauvais élèves, non accessibles en IPv6 : </h1>";
+    say "<p>", join(', ', @notpassed), "</p>";
+    say "</body></html>";
+}
+
+get_urls;
+check_reachability;
+do_html;
