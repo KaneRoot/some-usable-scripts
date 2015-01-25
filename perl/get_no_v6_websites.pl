@@ -3,7 +3,7 @@ use strict;
 use warnings;
 use v5.14;
 
-die "usage : ./$0 website_list.txt" if @ARGV != 1;
+die "usage : cat website_list.txt | ./$0 > page.html" if @ARGV != 0;
 
 my @tab;
 my %dom;
@@ -43,14 +43,14 @@ sub test_ipv6 {
 
         my @var = split "\n", $ret;
         for(@var) {
-
-            chomp $ret;
             next unless /:/;
-            say $ret;
+
+            chomp;
+            say; # print the IPv6
 
             # we try to reach the website's server
             my $retping = 
-            `/bin/ping6 -i 0.5 -c 2 $ret | grep ' 0% packet loss'`;
+            `/bin/ping6 -i 0.5 -c 2 $_ | grep ' 0% packet loss'`;
             chomp $retping;
 
             if(length $retping) {
@@ -66,6 +66,7 @@ sub check_reachability {
 
     say '<!-- ';
     for(keys %dom) {
+		chomp;
         test_ipv6 $_;
     }
     say '--!>';
