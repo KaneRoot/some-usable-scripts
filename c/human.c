@@ -160,7 +160,7 @@ get_tok_to_humanize (char *s, struct fields *f)
 int
 main (int argc, char *argv[])
 {
-    char *strtmp = malloc(BUFSIZ);
+    char strtmp[BUFSIZ];
     char *delim = NULL;   // options
     struct fields fields;
 
@@ -187,8 +187,6 @@ main (int argc, char *argv[])
         print_delim (strtmp, delim, &fields);
         printf("\n");
     }
-
-    free(strtmp);
 
     free(fields.fields);
 
