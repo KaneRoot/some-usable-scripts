@@ -84,6 +84,8 @@ print_token_to_human (const char *token)
         printf("%s ", stmp);
         free(stmp);
     }
+
+    // TODO prints error then exits
 }
 
 void
@@ -107,11 +109,10 @@ print_delim (char *s, const char *delim, const struct fields *f)
         // check if we need to print the current token humanized
         int found = 0;
 
-        for (j = 0 ; j < f->nbfields ; j++ ) {
+        for (j = 0 ; j < f->nbfields && found == 0; j++ ) {
             if( i == f->fields[j] ) {
                 print_token_to_human(token);
                 found = 1;
-                break;
             }
         }
 
@@ -120,21 +121,6 @@ print_delim (char *s, const char *delim, const struct fields *f)
             printf("%s ", token);
         }
     }
-}
-
-/*
- * print every line, with the first token humanized
- * there is a split in the line by the space character to get tokens
- */
-
-void
-print_human (char *s)
-{
-    struct fields f;
-    f.nbfields = 1;
-    f.fields = malloc(sizeof(unsigned int) * 1);
-    f.fields[0] = 1;
-    print_delim (s, " ", &f);
 }
 
 // get the index of every token to humanize
@@ -197,20 +183,17 @@ main (int argc, char *argv[])
     }
 
     while(fgets(strtmp, BUFSIZ, stdin)) {
-
         chomp(strtmp);
-
-        if(delim) {
-            print_delim (strtmp, delim, &fields);
-        }
-        else {
-            print_human (strtmp);
-        }
-
+        print_delim (strtmp, delim, &fields);
         printf("\n");
     }
 
     free(strtmp);
+
+    free(fields.fields);
+
+    if(argc == 2)
+        free(delim);
 
     exit(EXIT_SUCCESS);
 }
