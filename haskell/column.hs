@@ -1,6 +1,4 @@
-transpose:: [[a]] -> [[a]]
-transpose ([]:xs) = []
-transpose x = (map head x) : transpose (map tail x)
+import Data.List as L
 
 addEmpty :: Int -> [a] -> [a] -> [a]
 addEmpty x v y
@@ -21,7 +19,7 @@ completeMatrix m = map (addEmpty nb [""]) m
                    where nb = maximum $ map length m
 
 column :: [[String]] -> [[String]]
-column x = transpose $ formatLines $ transpose $ completeMatrix x
+column x = L.transpose $ formatLines $ L.transpose $ completeMatrix x
 
 main = do
     content <- getContents
