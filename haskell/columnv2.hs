@@ -12,7 +12,7 @@ completeMatrix m = map (\e -> e ++ [""| _ <- [length e..nb]]) m
                    where nb = maximum $ map length m
 
 column :: [[String]] -> [[String]]
-column x = L.transpose $ formatLines $ L.transpose $ completeMatrix x
+column = (L.transpose . formatLines . L.transpose . completeMatrix)
 
 main = do
     content <- getContents
