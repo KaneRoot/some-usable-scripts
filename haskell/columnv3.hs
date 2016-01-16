@@ -10,4 +10,4 @@ completeMatrix m = map (\e -> e ++ [""| _ <- [length e..nb]]) m
 
 main = do
     content <- getContents
-    putStr $ unlines $ map unwords $ (L.transpose . (\x -> map formatLine x) . L.transpose . completeMatrix) $ map words $ lines content
+    putStr $ unlines $ map unwords $ L.transpose $ map formatLine $ L.transpose $ completeMatrix $ map words $ lines content
