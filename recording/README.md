@@ -53,6 +53,19 @@ I also use `audacity` to remove background noise, which allows to increase the v
 
 Finally, for creating a thumbnail for my videos, I use `krita`.
 
+# Hardware
+
+About any low-end camera will do the job.
+Don't get too crazy, 50 euros is enough.
+Cheap cameras allow you to stream with low video quality, which is great for recording directly on your computer.
+Since you probably don't need to have your face in fullscreen, the low quality is not a problem.
+
+If you want a good video quality, either record with your phone or with the camera but without streaming it on your computer (quality isn't the same).
+I watched probably dozen of hours of people talking and showing the quality of their cheap cameras, and finally I only use a ridiculously low quality... which is perfectly fine for the job!
+
+Also, if you really want to improve the quality of the image, be sure to have enough light.
+Low-end cameras aren't great with low lights setups (as I use, but fuck it I don't even care at this point).
+
 Don't forget to have fun!
 
 [beautemusculation]: https://www.youtube.com/channel/UC7nYol-RiCxMV7Tzg_jOV4w/featured
