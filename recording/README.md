@@ -20,7 +20,7 @@ Don't hesitate to tweak a bit this script: there are a few hardcoded ffmpeg para
 
 # Synchronize audio and video
 
-The scrpt `sync.sh` is to include in your environment.
+The script `sync.sh` is to include in your environment.
 It adds a few shell functions, using ffmpeg and mpv to help mixing and synchronizing audio and video.
 
 - stereo2mono: my first error was to record a mono input in stereo, so I had audio only on the left side.
@@ -39,5 +39,20 @@ It adds a few shell functions, using ffmpeg and mpv to help mixing and synchroni
 
 This script _probably_ does work if your computer is powerful enough.
 That's not the case for mine.
+
+# Software
+
+I used `ffmpeg` a lot in these scripts.
+That's one of the most versatile program you can find, anywhere.
+
+I recommand `kdenlive` for both video editing (transitions, effects, inserts...) and for a few audio editing too.
+It does help removing audio artifacts.
+Learn how to use `keyframes` and you'll be ready for crazy productivity in no time.
+
+I also use `audacity` to remove background noise, which allows to increase the volume smoothly.
+
+Finally, for creating a thumbnail for my videos, I use `krita`.
+
+Don't forget to have fun!
 
 [beautemusculation]: https://www.youtube.com/channel/UC7nYol-RiCxMV7Tzg_jOV4w/featured
