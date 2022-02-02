@@ -1,0 +1,37 @@
+#!/bin/sh
+
+
+tohuman() awk -v COL=$1 '{
+	raw = $COL
+	new = raw
+	for (i=1; i<6;i++) {
+		if (raw >= 1000**i) {
+			if (i == 1) {
+				v = raw / 1000
+				new = v "K"
+			}
+			if (i == 2) {
+				v = raw / 1000000
+				new = v "M"
+			}
+			if (i == 3) {
+				v = raw / 1000000000
+				new = v "G"
+			}
+			if (i == 4) {
+				v = raw / 1000000000000
+				new = v "T"
+			}
+			if (i == 5) {
+				v = raw / 1000000000000000
+				new = v "P"
+			}
+		}
+	}
+	$1 = new
+	print
+}'
+
+col=${1:-1}
+
+tohuman "$col"

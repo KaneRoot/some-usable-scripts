@@ -1,0 +1,4 @@
+#!/bin/sh
+
+# du = sizes in Ko
+du -s * | awk '{$1*=1000; print}' | sort -n | tohuman | column -t
