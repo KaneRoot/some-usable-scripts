@@ -3,6 +3,8 @@ all:
 DOMAIN ?= karchnu.fr
 get-certificate-info:
 	openssl s_client -connect $(DOMAIN):443
+verify-web-certificate-dates:
+	echo | openssl s_client -connect $(DOMAIN):443 2>/dev/null | openssl x509 -noout -dates
 
 show-connected-ipv4:
 	@# Don't forget the double $$ since we are in a Makefile.
