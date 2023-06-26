@@ -1,0 +1,4 @@
+all: compilation
+
+compilation:
+	clang -o distortion $$(pkg-config --libs --cflags sndfile) -lm distort.c
