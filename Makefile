@@ -18,3 +18,6 @@ which-bin-uses-this-port:
 MAIL_DOMAIN ?= mail.karchnu.fr
 verify-mail-certificate:
 	echo | openssl s_client -starttls smtp -showcerts -connect $(MAIL_DOMAIN):587 -servername $(MAIL_DOMAIN) | openssl x509 -noout -dates
+
+verify-mail-imap-certificate:
+	echo | openssl s_client -showcerts -connect $(MAIL_DOMAIN):993 -servername $(MAIL_DOMAIN) | openssl x509 -noout -dates
