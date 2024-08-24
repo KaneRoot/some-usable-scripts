@@ -1,51 +1,63 @@
 #!/bin/bash
 
-# TODO: good codebase, need parameters and make a more generic tool
+set -x
 
-APKPKT=apk-tools-static-2.10.1-r0.apk
+# WARNING: this codebase is now updated in the "alpine.mk" makefile.
+# A makefile is a better option than a plain shell script, it enables
+# an automatic selection of the action to perform (by just selecting
+# the "rule" to make), without dedicated code.
 
-mirror=http://uk.alpinelinux.org/alpine/
-MAINREP=/media/fast/al
-CHROOT=$MAINREP/chroot
+#APKPKT=apk-tools-static-2.10.1-r0.apk
+
+#mirror=http://uk.alpinelinux.org/alpine/
+mirror=http://dl-cdn.alpinelinux.org/alpine
+MAIN_DIR=/tmp/root
+CHROOT=$MAIN_DIR/chroot
 PACKAGES="vim zsh"
-POSTPACKAGES="alpine-sdk git openssh openssl openssl-dev crystal"
+#POSTPACKAGES="alpine-sdk git openssh openssl openssl-dev crystal"
+POSTPACKAGES=""
+
+chroot_mkdir(){
+	mkdir -p $CHROOT || true
+}
+
+#chroot_apk_static(){
+#	cd ${MAIN_DIR}/
+#
+#	if [ -f ${APKPKT} ]; then
+#		echo "apk already downloaded"
+#	else
+#		wget ${mirror}/latest-stable/main/`uname -p`/${APKPKT}
+#		tar -xzf ${APKPKT}
+#	fi
+#}
 
 chroot_install(){
-	mkdir -p $CHROOT
-	cd ${MAINREP}/
+	cd ${MAIN_DIR}/
 
-	if [ -f ${APKPKT} ]; then
-		echo "apk already downloaded"
-	else
-		wget ${mirror}/latest-stable/main/`uname -p`/${APKPKT}
-		tar -xzf ${APKPKT}
-	fi
-
-	${MAINREP}/sbin/apk.static -X ${mirror}/latest-stable/main -U --allow-untrusted --root ${CHROOT} --initdb add alpine-base $PACKAGES
+	#${MAIN_DIR}/sbin/apk.static -X ${mirror}/latest-stable/main -U --allow-untrusted --root ${CHROOT} --initdb add alpine-base $PACKAGES
+	apk --arch $(arch) -X ${mirror}/latest-stable/main/ -U --allow-untrusted --root ${CHROOT} --initdb add alpine-base
 	cp /etc/resolv.conf $CHROOT/etc/
-	cp -r ~/.zsh* ~/.vim* ${CHROOT}/root
-	echo export PS1=\"\(chroot\) \$PS1\"  >> ${CHROOT}/root/.zshrc
+	#cp -r ~/.zsh* ~/.vim* ${CHROOT}/root
+	#echo export PS1=\"\(chroot\) \$PS1\"  >> ${CHROOT}/root/.zshrc
 
 	cat << END > $CHROOT/etc/apk/repositories
 http://uk.alpinelinux.org/alpine/latest-stable/main
 http://uk.alpinelinux.org/alpine/latest-stable/community
-http://uk.alpinelinux.org/alpine/edge/main
-http://uk.alpinelinux.org/alpine/edge/community
 END
 }
 
 chroot_mount(){
-	mount -t proc /proc ${CHROOT}/proc/
-	mount -o bind /sys  ${CHROOT}/sys/
-	mount -o bind /dev  ${CHROOT}/dev/
+	for a in proc sys dev; do mount -o bind /$a ${CHROOT}/$a; done
 }
 
 chroot_env(){
-	chroot ${CHROOT} /bin/zsh -l
+	chroot ${CHROOT} /bin/sh
+	#chroot ${CHROOT} /bin/zsh -l
 }
 
 chroot_post(){
-	${MAINREP}/sbin/apk.static --root ${CHROOT} add $POSTPACKAGES
+	#${MAIN_DIR}/sbin/apk.static --root ${CHROOT} add $POSTPACKAGES
 	# chroot ${CHROOT} /bin/zsh -l "apk update && apk upgrade && apk add $POSTPACKAGES"
 }
 
@@ -59,6 +71,8 @@ ask(){
 	fi
 }
 
+chroot_mkdir
+#ask chroot_apk_static
 ask chroot_install
 ask chroot_mount
 ask chroot_post
