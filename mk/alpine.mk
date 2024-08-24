@@ -4,10 +4,10 @@ VERSION   ?= v3.20
 MIRROR    ?= http://uk.alpinelinux.org/alpine/
 URL_REPOS ?= $(MIRROR)$(VERSION)
 
-enter-chroot:
+enter:
 	chroot $(CHROOT) /bin/sh
 
-install-chroot:
+install:
 	@echo "creating a new alpine $(VERSION) chroot"
 	mkdir -p $(CHROOT)
 	apk --arch $(ARCH) -X $(URL_REPOS)/main/ -U --allow-untrusted --root $(CHROOT) --initdb add alpine-base
@@ -15,15 +15,15 @@ install-chroot:
 	echo "$(URL_REPOS)/main"       > $(CHROOT)/etc/apk/repositories
 	echo "$(URL_REPOS)/community" >> $(CHROOT)/etc/apk/repositories
 
-mount-chroot:
+mount:
 	for a in proc sys dev; do mount -o bind /$$a $(CHROOT)/$$a; done
 
-umount-chroot:
+unmount:
 	-umount $(CHROOT)/proc
 	-umount $(CHROOT)/sys
 	-umount $(CHROOT)/dev
 
-delete-chroot: umount-chroot
+delete: unmount
 	rm -r $(CHROOT)
 
-new-chroot: install-chroot mount-chroot enter-chroot
+new: install mount enter
