@@ -1,33 +1,21 @@
-#SOURCE= vlc
-#CFLAGS=$(shell pkg-config --libs vlc)
-#
-#all: compilationvlc
-#
-#compilationvlc:
-#	$(CC) $(SOURCE).c -o $(SOURCE) $(CFLAGS)
+# Directory to store compiled binaries.
+BINDIR ?= /tmp/bin/
 
 CC=clang
 CFLAGS=-c -Wall -g
 LDFLAGS=
-CFILES=$(wildcard *.c) # CFILES => recompiles everything on a C file change
-EXEC=$(basename $(wildcard *.c))
-#SOURCES=$(wildcard *.c)
-TESTS=$(addsuffix .test, $(EXEC))
 
-all: $(SOURCES) $(EXEC)
+CFILES=$(wildcard *.c)
+EXEC=$(patsubst %.c,$(BINDIR)%,$(CFILES))
+TESTS=$(addsuffix .test, $(patsubst %.c,%,$(CFILES)))
 
-$(EXEC): $(CFILES)
-	$(CC) $(LDFLAGS) $@.c -o $@
+all: $(BINDIR) $(EXEC)
 
-.c.o:
-	$(CC) $(CFLAGS) $< -o $@
-
-clean:
-	@-rm $(EXEC)
+$(BINDIR):;         -mkdir -p $(BINDIR)
+$(EXEC): $(CFILES); $(CC) $(LDFLAGS) $< -o $@
+clean:;             @-rm $(EXEC)
 
 # to test a binary "prog" : make prog.test
-
-$(TESTS):
-	valgrind --leak-check=full -v --track-origins=yes ./$(basename $@)
+$(TESTS):; valgrind --leak-check=full -v --track-origins=yes $(BINDIR)$(basename $@)
 
 test: all $(TESTS)
