@@ -5,6 +5,8 @@
 
 #include <netdb.h>
 
+#include <sys/wait.h>
+
 #include <string.h>
 #include <sys/socket.h>
 #include <sys/types.h>
@@ -281,6 +283,35 @@ void network_server(char *port) {
 	}
 }
 
+void execute(char *filename) {
+	printf("execute: %s\n", filename);
+	pid_t cpuid = 0;
+
+	cpuid = fork();
+	if (cpuid == -1) {
+		fprintf(stderr, "fork failed\n");
+		return;
+	}
+
+	if (cpuid == 0) {
+		printf("I'm the child\n");
+		int ret = execl(filename, "hello", NULL);
+		if (ret == -1) {
+			printf("failed to exec %s\n", filename);
+			exit(EXIT_FAILURE);
+		}
+		printf("wait, what? probably failed to exec %s\n", filename);
+		exit(EXIT_FAILURE);
+	}
+	else {
+		printf("I'm the parent\n");
+		int status;
+		wait(&status);
+		printf("child exited with %d\n", status);
+	}
+}
+
+
 void usage(void) {
 	printf("usage: paintest r /path/to/file w /path/to/file n example.com:8080 u /unix/socket/path\n");
 }
@@ -293,13 +324,14 @@ int main(int argc, char **argv)
 		exit (EXIT_SUCCESS);
 	}
 
-	while (i != argc) {
+	while (i < argc) {
 		if      (memcmp(argv[i], "r", 1) == 0) { read_file(argv[i+1]);                      }
 		else if (memcmp(argv[i], "w", 1) == 0) { write_file(argv[i+1]);                     }
 		else if (memcmp(argv[i], "n", 1) == 0) { network_client(argv[i+1], argv[i+2]); i++; }
 		else if (memcmp(argv[i], "N", 1) == 0) { network_server(argv[i+1]);                 }
 		else if (memcmp(argv[i], "u", 1) == 0) { unixsock_client(argv[i+1]);                }
 		else if (memcmp(argv[i], "U", 1) == 0) { unixsock_server(argv[i+1]);                }
+		else if (memcmp(argv[i], "x", 1) == 0) { execute(argv[i+1]);                        }
 		else if (memcmp(argv[i], "h", 1) == 0) { usage();                                   }
 		i += 2;
 	}
