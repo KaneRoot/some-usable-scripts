@@ -3,6 +3,8 @@
 #include <unistd.h> // read write
 #include <stdlib.h>
 
+#include <netdb.h>
+
 #include <string.h>
 #include <sys/socket.h>
 #include <sys/types.h>
@@ -164,8 +166,119 @@ void unixsock_client(char *address) {
 	close(data_socket);
 }
 
-void network(char *address) {
-	printf("network: %s\n", address);
+void network_client(char *address, char *port) {
+	printf("network_client: @%s port %s\n", address, port);
+	int              sfd, s;
+	char             buffer[BUFFER_SIZE];
+	ssize_t          nread;
+	struct addrinfo  hints;
+	struct addrinfo  *result, *rp;
+
+	/* Obtain address(es) matching host/port. */
+	memset(&hints, 0, sizeof(hints));
+	hints.ai_family = AF_UNSPEC;    /* Allow IPv4 or IPv6 */
+	hints.ai_socktype = SOCK_DGRAM; /* Datagram socket */
+	hints.ai_flags = 0;
+	hints.ai_protocol = 0; /* Any protocol */
+
+	s = getaddrinfo(address, port, &hints, &result);
+	if (s != 0) {
+		fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(s));
+		exit(EXIT_FAILURE);
+	}
+
+	/* getaddrinfo() returns a list of address structures.
+	   Try each address until we successfully connect(2).
+	   If socket(2) (or connect(2)) fails, we (close the socket and) try the next address. */
+
+	for (rp = result; rp != NULL; rp = rp->ai_next) {
+		sfd = socket(rp->ai_family, rp->ai_socktype, rp->ai_protocol);
+		if (sfd == -1) continue;
+		if (connect(sfd, rp->ai_addr, rp->ai_addrlen) != -1) break;
+		close(sfd);
+	}
+	freeaddrinfo(result); /* No longer needed */
+
+	if (rp == NULL) { /* No address succeeded */
+		fprintf(stderr, "Could not connect\n");
+		exit(EXIT_FAILURE);
+	}
+
+	snprintf(buffer, 6, "hello");
+	if (write(sfd, buffer, 6) != 6) {
+		fprintf(stderr, "partial/failed write\n");
+		exit(EXIT_FAILURE);
+	}
+
+	nread = read(sfd, buffer, BUFFER_SIZE);
+	if (nread == -1) {
+		perror("read");
+		exit(EXIT_FAILURE);
+	}
+
+	printf("received %zd bytes: %s\n", nread, buffer);
+}
+
+void network_server(char *port) {
+	printf("network_server: %s\n", port);
+	int                     sfd, s;
+	char                    buffer[BUFFER_SIZE];
+	ssize_t                 nread;
+	socklen_t               peer_addrlen;
+	struct addrinfo         hints;
+	struct addrinfo         *result, *rp;
+	struct sockaddr_storage peer_addr;
+
+	memset(&hints, 0, sizeof(hints));
+	hints.ai_family = AF_UNSPEC;     /* Allow IPv4 or IPv6 */
+	hints.ai_socktype = SOCK_DGRAM;  /* Datagram socket */
+	hints.ai_flags = AI_PASSIVE;     /* For wildcard IP address */
+	hints.ai_protocol = 0;           /* Any protocol */
+	hints.ai_canonname = NULL;
+	hints.ai_addr = NULL;
+	hints.ai_next = NULL;
+
+	s = getaddrinfo(NULL, port, &hints, &result);
+	if (s != 0) {
+		fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(s));
+		exit(EXIT_FAILURE);
+	}
+
+	/* getaddrinfo() returns a list of address structures.
+	   Try each address until we successfully bind(2).
+	   If socket(2) (or bind(2)) fails, we (close the socket and) try the next address. */
+
+	for (rp = result; rp != NULL; rp = rp->ai_next) {
+		sfd = socket(rp->ai_family, rp->ai_socktype, rp->ai_protocol);
+		if (sfd == -1) continue;
+		if (bind(sfd, rp->ai_addr, rp->ai_addrlen) == 0) break;
+		close(sfd);
+	}
+	freeaddrinfo(result); /* No longer needed */
+
+	if (rp == NULL) { /* No address succeeded */
+		fprintf(stderr, "Could not bind\n");
+		exit(EXIT_FAILURE);
+	}
+
+	/* Read a single datagram and echo it back to sender. */
+	char host[NI_MAXHOST], service[NI_MAXSERV];
+
+	peer_addrlen = sizeof(peer_addr);
+	nread = recvfrom(sfd, buffer, BUFFER_SIZE, 0, (struct sockaddr *) &peer_addr, &peer_addrlen);
+	if (nread == -1) {
+		fprintf(stderr, "nread == -1\n");
+		exit(EXIT_FAILURE);
+	}
+
+	s = getnameinfo((struct sockaddr *) &peer_addr, peer_addrlen, host, NI_MAXHOST, service, NI_MAXSERV, NI_NUMERICSERV);
+	if (s == 0) printf("Received %zd bytes from %s:%s\n", nread, host, service);
+	else        fprintf(stderr, "getnameinfo: %s\n", gai_strerror(s));
+
+	printf("sending it back to sender\n");
+	if (sendto(sfd, buffer, nread, 0, (struct sockaddr *) &peer_addr, peer_addrlen) != nread) {
+		fprintf(stderr, "Error sending response\n");
+	}
 }
 
 void usage(void) {
@@ -181,13 +294,13 @@ int main(int argc, char **argv)
 	}
 
 	while (i != argc) {
-		// 
-		if      (memcmp(argv[i], "r", 1) == 0) { read_file(argv[i+1]);       }
-		else if (memcmp(argv[i], "w", 1) == 0) { write_file(argv[i+1]);      }
-		else if (memcmp(argv[i], "n", 1) == 0) { network(argv[i+1]);         }
-		else if (memcmp(argv[i], "u", 1) == 0) { unixsock_client(argv[i+1]); }
-		else if (memcmp(argv[i], "U", 1) == 0) { unixsock_server(argv[i+1]); }
-		else if (memcmp(argv[i], "h", 1) == 0) { usage();                    }
+		if      (memcmp(argv[i], "r", 1) == 0) { read_file(argv[i+1]);                      }
+		else if (memcmp(argv[i], "w", 1) == 0) { write_file(argv[i+1]);                     }
+		else if (memcmp(argv[i], "n", 1) == 0) { network_client(argv[i+1], argv[i+2]); i++; }
+		else if (memcmp(argv[i], "N", 1) == 0) { network_server(argv[i+1]);                 }
+		else if (memcmp(argv[i], "u", 1) == 0) { unixsock_client(argv[i+1]);                }
+		else if (memcmp(argv[i], "U", 1) == 0) { unixsock_server(argv[i+1]);                }
+		else if (memcmp(argv[i], "h", 1) == 0) { usage();                                   }
 		i += 2;
 	}
 
