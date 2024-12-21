@@ -1,9 +1,9 @@
 # Directory to store compiled binaries.
 BINDIR ?= /tmp/bin/
 
-CC=clang
-CFLAGS=-c -Wall -g
-LDFLAGS=
+CC      ?= clang
+CFLAGS  ?= -c -Wall -g
+LDFLAGS ?=
 
 CFILES=$(wildcard *.c)
 EXEC=$(patsubst %.c,$(BINDIR)%,$(CFILES))
