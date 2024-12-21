@@ -12,7 +12,7 @@ TESTS=$(addsuffix .test, $(patsubst %.c,%,$(CFILES)))
 all: $(BINDIR) $(EXEC)
 
 $(BINDIR):;         -mkdir -p $(BINDIR)
-$(EXEC): $(CFILES); $(CC) $(LDFLAGS) $< -o $@
+$(EXEC): $(CFILES); $(CC) $(LDFLAGS) `basename $@`.c -o $@
 clean:;             @-rm $(EXEC)
 
 # to test a binary "prog" : make prog.test
