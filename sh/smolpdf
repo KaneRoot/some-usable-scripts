@@ -1,0 +1,8 @@
+#!/bin/sh
+
+if [ $# -lt 2 ]; then
+	echo "usage: $0 input.pdf output.pdf"
+	exit 1
+fi
+
+convert -density 150 -quality 30 -compress jpeg "$1" "$2"
